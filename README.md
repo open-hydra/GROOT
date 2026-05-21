@@ -4,8 +4,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/open-hydra/MOSE/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg" alt="License: GPLv3"></a>
-  <a href="https://open-hydra.github.io/MOSE/"><img src="https://img.shields.io/badge/docs-online-brightgreen.svg" alt="Documentation"></a>
+  <a href="https://github.com/open-hydra/GROOT/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg" alt="License: GPLv3"></a>
+  <a href="https://open-hydra.github.io/GROOT/"><img src="https://img.shields.io/badge/docs-online-brightgreen.svg" alt="Documentation"></a>
   <img src="https://img.shields.io/badge/language-Fortran-734f96.svg" alt="Language: Fortran">
 </p>
 
