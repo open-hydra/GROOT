@@ -4,6 +4,7 @@
 </p>
 
 <p align="center">
+  <a href="https://doi.org/10.5281/zenodo.20326894"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.20326894.svg" alt="DOI"></a>
   <a href="https://github.com/open-hydra/GROOT/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPLv3-blue.svg" alt="License: GPLv3"></a>
   <a href="https://open-hydra.github.io/GROOT/"><img src="https://img.shields.io/badge/docs-online-brightgreen.svg" alt="Documentation"></a>
   <img src="https://img.shields.io/badge/language-Fortran-734f96.svg" alt="Language: Fortran">
