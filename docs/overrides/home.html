@@ -1,0 +1,198 @@
+{% extends "main.html" %}
+
+{% block tabs %}
+{{ super() }}
+
+<style>.md-header { position: initial; }</style>
+
+<div class="groot-home">
+
+  <!-- ══════════════════════════════════════════ HERO ══════════════════════════════════════════ -->
+  <section class="groot-hero">
+    <div class="groot-hero__grid"></div>
+    <div class="groot-hero__glow groot-hero__glow--a"></div>
+    <div class="groot-hero__glow groot-hero__glow--b"></div>
+    <div class="groot-hero__wrap">
+
+      <span class="groot-badge">
+        <span class="groot-badge__dot"></span>
+        Hydra CFD Suite
+      </span>
+
+      <h1 class="groot-hero__h1">GROOT</h1>
+      <p class="groot-hero__sub">Grid based RadiatiOn fOrtran Toolbox</p>
+      <p class="groot-hero__body">
+        Open-source discrete transfer method solver for the radiative transfer equation on
+        multi-block structured grids — from simple 1D benchmarks to fully coupled
+        3D radiative heat transfer simulations.
+      </p>
+
+      <div class="groot-hero__btns">
+        <a href="{{ 'getting-started/' | url }}" class="groot-btn groot-btn--primary">
+          Get Started &nbsp;&rarr;
+        </a>
+        <a href="{{ 'theory/' | url }}" class="groot-btn groot-btn--ghost">
+          Theory Guide
+        </a>
+      </div>
+
+      <div class="groot-hero__pills">
+        <div class="groot-pill"><strong>DTM</strong>&nbsp;Solver</div>
+        <div class="groot-pill"><strong>1D / 2D / 3D</strong>&nbsp;Geometries</div>
+        <div class="groot-pill"><strong>WSGG</strong>&nbsp;Spectral Models</div>
+        <div class="groot-pill"><strong>OpenMP</strong>&nbsp;Parallel</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ FEATURES ════════════════════════════════════════ -->
+  <section class="groot-features">
+    <div class="groot-container">
+      <div class="groot-section-hd">
+        <h2>Everything you need for radiative heat transfer</h2>
+        <p>A complete, battle-tested radiation solver written in modern Fortran</p>
+      </div>
+      <div class="groot-grid">
+
+        <article class="groot-card groot-card--amber">
+          <div class="groot-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+          <h3>Discrete Transfer Method</h3>
+          <p>Solves the steady-state radiative transfer equation via DTM on multi-block structured grids, providing both radiative heat flux and source term.</p>
+        </article>
+
+        <article class="groot-card groot-card--orange">
+          <div class="groot-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+          <h3>1D / 2D / 3D Geometries</h3>
+          <p>Handles one-, two-, and three-dimensional configurations with periodic boundary conditions, enabling a wide range of test cases and coupled simulations.</p>
+        </article>
+
+        <article class="groot-card groot-card--red">
+          <div class="groot-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <h3>Spectral Gas Models</h3>
+          <p>Built-in support for gray gas and Weighted-Sum-of-Gray-Gases (WSGG) spectral models to account for wavelength-dependent emission and absorption.</p>
+        </article>
+
+        <article class="groot-card groot-card--green">
+          <div class="groot-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <h3>OpenMP Parallelism</h3>
+          <p>Shared-memory parallelism via OpenMP for efficient multi-core execution, enabling large-scale radiative calculations on workstations and HPC nodes.</p>
+        </article>
+
+        <article class="groot-card groot-card--teal">
+          <div class="groot-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <h3>Solver Coupling</h3>
+          <p>Designed to be coupled with other Hydra suite solvers, providing the radiative heat flux and source term to CFD simulations of reacting flows.</p>
+        </article>
+
+        <article class="groot-card groot-card--pink">
+          <div class="groot-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <h3>Flexible I/O</h3>
+          <p>Solution output in Tecplot (ASCII &amp; binary) and VTK formats.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ QUICK START ══════════════════════════════════════ -->
+  <section class="groot-qs">
+    <div class="groot-container groot-qs__inner">
+
+      <div class="groot-qs__text">
+        <h2>Up and running in minutes</h2>
+        <p>GROOT ships with a single install script that handles all dependencies, compiles the Fortran core, and puts the binary on your PATH.</p>
+        <div class="groot-qs__links">
+          <a href="{{ 'getting-started/installation/' | url }}" class="groot-btn groot-btn--primary">
+            Installation guide &rarr;
+          </a>
+          <a href="{{ 'getting-started/quick-start/' | url }}" class="groot-btn groot-btn--secondary">
+            Quick start
+          </a>
+        </div>
+      </div>
+
+      <div class="groot-qs__code">
+        <div class="groot-term">
+          <div class="groot-term__bar">
+            <span class="groot-term__dot groot-term__dot--r"></span>
+            <span class="groot-term__dot groot-term__dot--y"></span>
+            <span class="groot-term__dot groot-term__dot--g"></span>
+            <span class="groot-term__label">terminal</span>
+          </div>
+          <pre class="groot-term__body"><code><span class="gtc"># Clone and build</span>
+<span class="gtp">$</span> git clone https://github.com/open-hydra/GROOT.git
+<span class="gtp">$</span> cd GROOT &amp;&amp; ./install.sh
+
+<span class="gtc"># Run a simulation</span>
+<span class="gtp">$</span> ./bin/GROOT </code></pre>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ ECOSYSTEM ════════════════════════════════════════ -->
+  <section class="groot-eco">
+    <div class="groot-container">
+      <div class="groot-section-hd">
+        <h2>The Hydra CFD Suite</h2>
+        <p>GROOT is the radiative heat transfer solver in an integrated multi-physics simulation suite</p>
+      </div>
+      <div class="groot-eco__flow">
+        <a href="https://github.com/open-hydra/MOSE" target="_blank" rel="noopener" class="groot-eco__node">
+          <span class="groot-eco__node-name">MOSE</span>
+          <span class="groot-eco__node-role">CFD Solver</span>
+          <span class="groot-eco__node-desc">Compressible Euler &amp; Navier-Stokes with finite-rate chemistry</span>
+        </a>
+        <div class="groot-eco__arrow">&#8594;</div>
+        <div class="groot-eco__node groot-eco__node--active">
+          <span class="groot-eco__node-tag">You are here</span>
+          <span class="groot-eco__node-name">GROOT</span>
+          <span class="groot-eco__node-role">Radiation Solver</span>
+          <span class="groot-eco__node-desc">Radiative heat flux &amp; source term via Discrete Transfer Method</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /.groot-home -->
+{% endblock %}
+
+{% block content %}{% endblock %}
+{% block footer %}{{ super() }}{% endblock %}

@@ -1,0 +1,4 @@
+build
+bin
+CMakePresets.json
+OUTPUT
