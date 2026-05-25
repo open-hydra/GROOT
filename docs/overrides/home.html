@@ -174,19 +174,47 @@
         <h2>The Hydra CFD Suite</h2>
         <p>GROOT is the radiative heat transfer solver in an integrated multi-physics simulation suite</p>
       </div>
-      <div class="groot-eco__flow">
-        <a href="https://github.com/open-hydra/MOSE" target="_blank" rel="noopener" class="groot-eco__node">
-          <span class="groot-eco__node-name">MOSE</span>
-          <span class="groot-eco__node-role">CFD Solver</span>
-          <span class="groot-eco__node-desc">Compressible Euler &amp; Navier-Stokes with finite-rate chemistry</span>
+      <div class="groot-eco__flow groot-eco__flow--graph">
+        <a href="https://github.com/open-hydra/ATLAS" target="_blank" rel="noopener" class="groot-eco__node">
+          <span class="groot-eco__node-name">ATLAS</span>
+          <span class="groot-eco__node-role">Pre-processor</span>
+          <span class="groot-eco__node-desc">Phase properties and BC/IC builders</span>
         </a>
-        <div class="groot-eco__arrow">&#8594;</div>
-        <div class="groot-eco__node groot-eco__node--active">
-          <span class="groot-eco__node-tag">You are here</span>
-          <span class="groot-eco__node-name">GROOT</span>
-          <span class="groot-eco__node-role">Radiation Solver</span>
-          <span class="groot-eco__node-desc">Radiative heat flux &amp; source term via Discrete Transfer Method</span>
+
+        <div class="groot-eco__branch" aria-hidden="true">
+          <span class="groot-eco__arrow groot-eco__arrow--diag">&#8599;</span>
+          <span class="groot-eco__arrow groot-eco__arrow--diag">&#8600;</span>
         </div>
+
+        <div class="groot-eco__parallel">
+          <a href="https://github.com/open-hydra/MOSE" target="_blank" rel="noopener" class="groot-eco__node">
+            <span class="groot-eco__node-name">MOSE</span>
+            <span class="groot-eco__node-role">Solver/Library</span>
+            <span class="groot-eco__node-desc">Compressible ideal-gas CFD solver</span>
+          </a>
+          <a href="https://github.com/open-hydra/FUSS" target="_blank" rel="noopener" class="groot-eco__node">
+            <span class="groot-eco__node-name">FUSS</span>
+            <span class="groot-eco__node-role">Solver/Library</span>
+            <span class="groot-eco__node-desc">Solid heat conduction solver</span>
+          </a>
+          <div class="groot-eco__node groot-eco__node--active">
+            <span class="groot-eco__node-tag">You are here</span>
+            <span class="groot-eco__node-name">GROOT</span>
+            <span class="groot-eco__node-role">Solver/Library</span>
+            <span class="groot-eco__node-desc">Radiative transfer equation solver</span>
+          </div>
+        </div>
+
+        <div class="groot-eco__branch" aria-hidden="true">
+          <span class="groot-eco__arrow groot-eco__arrow--diag">&#8600;</span>
+          <span class="groot-eco__arrow groot-eco__arrow--diag">&#8599;</span>
+        </div>
+
+        <a href="https://github.com/open-hydra" target="_blank" rel="noopener" class="groot-eco__node">
+          <span class="groot-eco__node-name">Hydra</span>
+          <span class="groot-eco__node-role">Solver</span>
+          <span class="groot-eco__node-desc">Integrated solver for fully-coupled simulations</span>
+        </a>
       </div>
     </div>
   </section>
