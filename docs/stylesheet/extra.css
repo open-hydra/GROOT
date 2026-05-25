@@ -390,10 +390,27 @@
   gap: 1.5rem;
   flex-wrap: wrap;
 }
+.groot-eco__flow--graph {
+  flex-wrap: nowrap;
+}
+.groot-eco__parallel,
+.groot-eco__branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.groot-eco__parallel {
+  gap: 1.25rem;
+}
 .groot-eco__arrow {
   font-size: 1.75rem;
   color: var(--md-default-fg-color--light, #888);
   flex-shrink: 0;
+}
+.groot-eco__arrow--diag {
+  line-height: 1;
 }
 .groot-eco__node {
   display: flex;
@@ -466,10 +483,17 @@
   .groot-hero {
     padding: 5rem 1.5rem 4rem;
   }
-  .groot-eco__flow {
+  .groot-eco__flow,
+  .groot-eco__flow--graph {
     flex-direction: column;
   }
   .groot-eco__arrow {
     transform: rotate(90deg);
+  }
+  .groot-eco__branch {
+    flex-direction: row;
+  }
+  .groot-eco__arrow--diag {
+    transform: none;
   }
 }
