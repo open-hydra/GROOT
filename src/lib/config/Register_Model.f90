@@ -19,7 +19,7 @@ contains
 
     call reg%add(sec, 'model', obj_rad_model%model, 'const', &
         'Spectral model for gas-phase absorption coefficient', &
-        'const , gray, wsgg , wsgg-H2O , wsgg-H2OCO2', .false.)
+        'const , gray, wsgg , wsgg-H2O , wsgg-H2OCO2 , snbw , snb', .false.)
 
     call reg%add(sec, 'wall_emissivity', obj_rad_model%eps_wall, '1.0', &
         'Wall emissivity (uniform, applied to all opaque walls)', '>= 0', .true.)
@@ -44,8 +44,10 @@ contains
     integer :: js, check
 
 
-    !! If model is 'const', no species parsing needed
-    if (trim(obj_rad_model%model) == 'const') then
+    !! For 'const', 'snbw', 'snb': species looked up internally, no INI species list needed
+    if (trim(obj_rad_model%model) == 'const' .or. &
+        trim(obj_rad_model%model) == 'snbw'  .or. &
+        trim(obj_rad_model%model) == 'snb') then
       nscrad = 0
       if (allocated(rad_species)) deallocate(rad_species)
       allocate(rad_species(0))

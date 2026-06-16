@@ -29,11 +29,12 @@ contains
     !! Constant absorption coefficient flag
     kcost = (trim(model) == 'const')
 
-    !! Number of gray gases
+    !! Number of gray gases / narrow bands
     select case (trim(model))
-      case ('gray', 'const');       Ngg = 0
+      case ('gray', 'const');            Ngg = 0
       case ('wsgg-H2O', 'wsgg-H2OCO2'); Ngg = 4
-      case default;                  Ngg = 0
+      case ('snbw', 'snb');              Ngg = 450  ! N_SNB_BANDS in Lib_snbw
+      case default;                      Ngg = 0
     end select
 
   end subroutine Assign_Setup
