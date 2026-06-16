@@ -3,6 +3,14 @@ file(GLOB_RECURSE GROOT_SRC
     ${CMAKE_SOURCE_DIR}/src/lib/*.f90
 )
 
+# Bake the SNB data directory path into a Fortran module at configure time
+configure_file(
+    "${CMAKE_SOURCE_DIR}/src/lib/physics/snb_datadir.f90.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/snb_datadir.f90"
+    @ONLY
+)
+list(APPEND GROOT_SRC "${CMAKE_CURRENT_BINARY_DIR}/snb_datadir.f90")
+
 add_library(GROOTL ${GROOT_SRC})
 add_library(GROOTL::GROOTL ALIAS GROOTL)
 target_link_libraries(GROOTL PRIVATE FiNeR::FiNeR ORION)

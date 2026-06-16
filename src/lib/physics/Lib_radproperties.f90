@@ -1,25 +1,32 @@
 module GROOT_Lib_Radproperties
   use, intrinsic :: iso_fortran_env, only : I4 => int32, R8 => real64
-  implicit none 
-  integer(kind=I4) :: iH2O,iCO2
+  implicit none
+  integer(kind=I4) :: iH2O, iCO2, iCO
 
   contains
 
-  ! finds index of radiative species in cfd species array
+  ! finds index of radiative species in cfd species array; loads SNBW database when needed
   subroutine map_species
     use GROOT_Global_m, only: model, cfd_species, nsc
-    implicit none 
+    use GROOT_Lib_SNBW, only: read_snb_param
+    use GROOT_SNB_Datadir, only: snb_data_path
+    implicit none
 
-    if (model == 'wsgg-H2O') then 
+    if (model == 'wsgg-H2O') then
       iH2O = findindex('H2O')
-    elseif (model == 'wsgg-H2OCO2') then 
+    elseif (model == 'wsgg-H2OCO2') then
       iH2O = findindex('H2O')
       iCO2 = findindex('CO2')
-    else 
+    elseif (model == 'snbw' .or. model == 'snb') then
+      iH2O = findindex('H2O')
+      iCO2 = findindex('CO2')
+      iCO  = findindex('CO')
+      call read_snb_param(snb_data_path)
+    else
 
     endif
 
-  end subroutine map_species 
+  end subroutine map_species
 
   ! finds which entry of cfd species array corresponds to species "spec"
   function findindex(spec) result(ind)
@@ -38,65 +45,70 @@ module GROOT_Lib_Radproperties
   end function findindex
 
   ! computes radiative properties of mixture
-  subroutine compute_gasproperties(xvec,p,T,fvs,ka,a,Ib)
+  subroutine compute_gasproperties(xvec,p,T,fvs,ka,a,Ib,kb)
     use GROOT_Global_m, only: model, nsc, nscdat, ind_species, cfd_species, sigma, pi, k_user, Ngg
+    use GROOT_Lib_SNBW, only: co_ksnb, co_ksnb_malkmus
     implicit none
-    real(kind=R8), intent(in) :: xvec(1:nsc)  !< vector of partial densities
-    real(kind=R8), intent(in) :: p            !< pressure in Pa
-    real(kind=R8), intent(in) :: T            !< temperature in K
-    real(kind=R8), intent(in) :: fvs          !< soot volume fraction (not used)
-    real(kind=R8), intent(out):: ka(0:Ngg)    !< absorption coefficient
-    real(kind=R8), intent(out):: a(0:Ngg)     !< WSGG weight
-    real(kind=R8), intent(out):: Ib           !< blackbody power
+    real(kind=R8), intent(in)           :: xvec(1:nsc)  !< molar fractions
+    real(kind=R8), intent(in)           :: p            !< pressure [Pa]
+    real(kind=R8), intent(in)           :: T            !< temperature [K]
+    real(kind=R8), intent(in)           :: fvs          !< soot volume fraction (reserved)
+    real(kind=R8), intent(out)          :: ka(0:Ngg)    !< absorption coefficient [m-1]
+    real(kind=R8), intent(out)          :: a(0:Ngg)     !< spectral weight [-]
+    real(kind=R8), intent(out)          :: Ib           !< total blackbody intensity [W m-2 sr-1]
+    real(kind=R8), optional, intent(out):: kb(0:)       !< Malkmus beta_eff (SNB full only)
 
     integer(kind=I4) :: is
-    real(kind=R8) :: eps, xH2O, XCO2
+    real(kind=R8) :: eps, xH2O, xCO2, xCO_loc
+    real(kind=R8) :: beta_loc(0:Ngg)
 
-    if (model=='const') then 
+    if (model=='const') then
       ka = k_user
-      a = 1.0 
-      Ib = sigma*T**4*1/pi
-    elseif (model == 'gray') then 
-      ka = 0
+      a  = 1.0_R8
+      Ib = sigma*T**4/pi
+    elseif (model == 'gray') then
+      ka = 0.0_R8
       do is = 1, nscdat
         if (ind_species(is).ne.0) then
           ka = ka + xvec(ind_species(is))*graygas(T,p,is)
         endif
       enddo
-      Ib = sigma*T**4*1/pi
-      a = 1.0
-    elseif (model == 'wsgg-H2O') then 
-      xH2O = 0.d0
-      do is = 1, nsc 
-        if (cfd_species(is)=='H2O') then 
-          xH2O = xvec(is)
-          exit
-        endif 
-      enddo
-
-      call wsggH2O(xH2O, p, T, 1.D0, ka, a, eps) 
-      Ib = sigma*T**4*1/pi
-
-    elseif (model == 'wsgg-H2OCO2') then 
-      xH2O = 0.d0 
-      xCO2 = 0.d0 
-      do is = 1, nsc 
-        if (cfd_species(is)=='H2O') then 
-          xH2O = xvec(is)
-          exit
-        endif 
-      enddo
-      do is = 1, nsc 
-        if (cfd_species(is)=='CO2') then 
-          xCO2 = xvec(is)
-          exit
-        endif 
-      enddo
-      call wsggH2OCO2_MR(xH2O, xCO2, p, T, 1.D0, ka, a, eps)
-      Ib = sigma*T**4*1/pi
+      Ib = sigma*T**4/pi
+      a  = 1.0_R8
+    elseif (model == 'wsgg-H2O') then
+      xH2O = 0.0_R8
+      if (iH2O > 0) xH2O = xvec(iH2O)
+      call wsggH2O(xH2O, p, T, 1.0_R8, ka, a, eps)
+      Ib = sigma*T**4/pi
+    elseif (model == 'wsgg-H2OCO2') then
+      xH2O = 0.0_R8
+      xCO2 = 0.0_R8
+      if (iH2O > 0) xH2O = xvec(iH2O)
+      if (iCO2 > 0) xCO2 = xvec(iCO2)
+      call wsggH2OCO2_MR(xH2O, xCO2, p, T, 1.0_R8, ka, a, eps)
+      Ib = sigma*T**4/pi
+    elseif (model == 'snbw') then
+      xH2O    = 0.0_R8
+      xCO2    = 0.0_R8
+      xCO_loc = 0.0_R8
+      if (iH2O > 0) xH2O    = xvec(iH2O)
+      if (iCO2 > 0) xCO2    = xvec(iCO2)
+      if (iCO  > 0) xCO_loc = xvec(iCO)
+      call co_ksnb(T, p, xH2O, xCO2, xCO_loc, ka, a)
+      Ib = sigma*T**4/pi
+    elseif (model == 'snb') then
+      xH2O    = 0.0_R8
+      xCO2    = 0.0_R8
+      xCO_loc = 0.0_R8
+      if (iH2O > 0) xH2O    = xvec(iH2O)
+      if (iCO2 > 0) xCO2    = xvec(iCO2)
+      if (iCO  > 0) xCO_loc = xvec(iCO)
+      call co_ksnb_malkmus(T, p, xH2O, xCO2, xCO_loc, ka, a, beta_loc)
+      if (present(kb)) kb = beta_loc
+      Ib = sigma*T**4/pi
     else
-      print *, 'slected model not available'
-      stop 
+      print *, 'selected model not available: ', trim(model)
+      stop
     endif
   end subroutine compute_gasproperties
 

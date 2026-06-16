@@ -337,7 +337,7 @@ subroutine intRTE(Nrs,ray, grid, pos, ds, nstep, ifa1, rayflag, Intensity)
   use GROOT_Lib_Math,     only : scalar
   use GROOT_Mod_Face,     only: get_ind
   use GROOT_Advanced_Types_m, only: GROOT_domain_type
-  use GROOT_Global_m, only: Ngg, sigma, imax, pi
+  use GROOT_Global_m, only: Ngg, sigma, imax, pi, model
   implicit none
   integer,                  intent(in)    :: Nrs              !< Number of rays
   real(kind=R8),            intent(in)    :: ray(1:3)         !< current ray versor
@@ -353,11 +353,15 @@ subroutine intRTE(Nrs,ray, grid, pos, ds, nstep, ifa1, rayflag, Intensity)
   integer :: ind1, ind2     ! face indexes
   integer :: jj             ! ray step counter
   integer :: ig             ! gray gas/narrow band index
-  real(kind=R8):: Ivec(1:imax)   ! intensities alogn ray steps
+  real(kind=R8):: Ivec(1:imax)   ! intensities along ray steps
   real(kind=R8):: ka, ks         ! abs and scatter coefficient
   real(kind=R8):: ibb            ! black body intensity
   real(kind=R8):: I0             ! intensity at ray start
   real(kind=R8):: S, om          ! appoggio
+  real(kind=R8):: tau, beta_v, ds_step  ! Malkmus variables
+  logical      :: use_malkmus
+
+  use_malkmus = (trim(model) == 'snb')
 
   Intensity = 0.d0
   ! get face indexes of final point
@@ -377,16 +381,22 @@ subroutine intRTE(Nrs,ray, grid, pos, ds, nstep, ifa1, rayflag, Intensity)
     Ivec(1) = I0
     do jj = 1, nstep
       ib = pos(nstep+1-jj,1); i = pos(nstep+1-jj,2); j = pos(nstep+1-jj,3); k = pos(nstep+1-jj,4)
-      ka = grid%blk(ib)%ka(i,j,k,ig)
+      ka  = grid%blk(ib)%ka(i,j,k,ig)
       ibb = grid%blk(ib)%Ib(i,j,k)
+      S   = grid%blk(ib)%a(i,j,k,ig) * ibb
+      ds_step = ds(nstep+1-jj)
 
-      om = 1/(ka+1.d-40)
-      S = grid%blk(ib)%a(i,j,k,ig)*ibb
-
-      Ivec(jj+1) = Ivec(jj)*exp(-ka*ds(nstep+1-jj))+S*(1-exp(-ka*ds(nstep+1-jj))) 
-    enddo   
+      om = 1.0d0/(ka+1.d-40)
+      if (use_malkmus) then
+        beta_v = grid%blk(ib)%kb(i,j,k,ig)
+        tau = exp(-beta_v * (sqrt(1.0_R8 + 2.0_R8*ka*ds_step/beta_v) - 1.0_R8))
+        Ivec(jj+1) = Ivec(jj)*tau + S*(1.0_R8 - tau)
+      else
+        Ivec(jj+1) = Ivec(jj)*exp(-ka*ds_step) + S*(1.0_R8 - exp(-ka*ds_step))
+      end if
+    enddo
     Intensity(ig) = Ivec(nstep+1)
-  enddo 
+  enddo
 
 end subroutine intRTE
 
