@@ -27,8 +27,8 @@ numerical methods implemented in GROOT.
 
     ---
 
-    Gray gas (constant $\kappa$) and weighted-sum-of-gray-gases (WSGG)
-    approximations for non-gray participating media
+    Gray gas (constant $\kappa$), weighted-sum-of-gray-gases (WSGG)
+    approximations and SNB models for non-gray participating media
 
     [:octicons-arrow-right-24: Spectral models](spectral-models.md)
 
@@ -47,6 +47,6 @@ The numerical pipeline can be summarised as follows:
 |-------|--------|------|
 | **Governing equation** | Radiative transfer equation (RTE) | [RTE](rte.md) |
 | **Spatial discretization** | Discrete Transfer Method (DTM) | [DTM](dtm.md) |
-| **Spectral integration** | Gray gas or WSGG | [Spectral Models](spectral-models.md) |
+| **Spectral integration** | Gray gas, WSGG or SNB | [Spectral Models](spectral-models.md) |
 
 ---
