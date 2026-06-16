@@ -39,7 +39,8 @@ module GROOT_Advanced_Types_m
 
     !! Radiative field
     real(R8), allocatable :: ka(:,:,:,:)    !< Absorption coefficient (0:Ngg)
-    real(R8), allocatable :: a (:,:,:,:)    !< WSGG weights (0:Ngg)
+    real(R8), allocatable :: a (:,:,:,:)    !< Spectral weights (0:Ngg)
+    real(R8), allocatable :: kb(:,:,:,:)    !< Malkmus beta_eff (0:Ngg) — SNB full only
     real(R8), allocatable :: Ib(:,:,:)      !< Blackbody power
     real(R8), allocatable :: source(:,:,:)  !< Radiative source div(q)
     real(R8), allocatable :: G(:,:,:)       !< Irradiation
