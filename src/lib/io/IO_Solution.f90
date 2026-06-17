@@ -97,7 +97,7 @@ contains
     Onvar    = 0
 
     select case (trim(model))
-      case ('gray', 'const')
+      case ('gray', 'const', 'snbw', 'snb')
         Varnames = trim(Varnames)//'"Ib" "k" "divq"'
         Onvar    = 3
       case ('wsgg-H2O', 'wsgg-H2OCO2')
@@ -170,6 +170,18 @@ contains
                     Nz => grid%blk(b)%dim(3))
             IOfield%block(b)%vars(1, 1:Nx, 1:Ny, 1:Nz) = grid%blk(b)%Ib   (1:Nx, 1:Ny, 1:Nz)
             IOfield%block(b)%vars(2, 1:Nx, 1:Ny, 1:Nz) = grid%blk(b)%ka   (1:Nx, 1:Ny, 1:Nz, 0)
+            IOfield%block(b)%vars(3, 1:Nx, 1:Ny, 1:Nz) = grid%blk(b)%source(1:Nx, 1:Ny, 1:Nz)
+          end associate
+          Varnames = '"Ib" "k" "divq"'
+
+        case ('snbw', 'snb')
+          associate(Nx => grid%blk(b)%dim(1), &
+                    Ny => grid%blk(b)%dim(2), &
+                    Nz => grid%blk(b)%dim(3))
+            IOfield%block(b)%vars(1, 1:Nx, 1:Ny, 1:Nz) = grid%blk(b)%Ib(1:Nx, 1:Ny, 1:Nz)
+            IOfield%block(b)%vars(2, 1:Nx, 1:Ny, 1:Nz) = &
+              sum(grid%blk(b)%ka(1:Nx, 1:Ny, 1:Nz, 1:Ngg) * &
+                  grid%blk(b)%a (1:Nx, 1:Ny, 1:Nz, 1:Ngg), dim=4)
             IOfield%block(b)%vars(3, 1:Nx, 1:Ny, 1:Nz) = grid%blk(b)%source(1:Nx, 1:Ny, 1:Nz)
           end associate
           Varnames = '"Ib" "k" "divq"'
