@@ -264,6 +264,7 @@ contains
     jc = Ny           !                       j = Ny  (y ≈ 0.483 m)
     dz = grid%blk(b)%z(1,1,Nz+1) - grid%blk(b)%z(1,1,1)
 
+    call execute_command_line('mkdir -p OUTPUT', wait=.true.)
     open(newunit=unit1, file='OUTPUT/source_corner.dat')
     write(unit1,'(A)') '# z [m]              source [W/m3]'
     write(unit1,'(A)') '# position: x=y≈0.483 m (near symmetry planes, same as'

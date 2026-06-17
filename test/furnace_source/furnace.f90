@@ -339,6 +339,7 @@ contains
     b  = 1
     dx = L0 / real(Ni, R8)
 
+    call execute_command_line('mkdir -p OUTPUT', wait=.true.)
     open(newunit=unit1, file='OUTPUT/source_j25.dat')
     write(unit1,'(A,F6.4,A,F5.1,A)') &
       '# x [m]              source [W/m3]   r_c=', &

@@ -256,6 +256,7 @@ contains
     jc = Ny/2 + 1
     dz = grid%blk(b)%z(1,1,Nz+1) - grid%blk(b)%z(1,1,1)
 
+    call execute_command_line('mkdir -p OUTPUT', wait=.true.)
     open(newunit=unit1, file='OUTPUT/source_centerline_k'//trim(k_str)//'.dat')
     write(unit1,'(A)') '# z   source [W/m³]'
     do k = 1, Nz

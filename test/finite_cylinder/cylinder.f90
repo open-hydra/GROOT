@@ -310,6 +310,7 @@ contains
     b  = 1
     dx = L0 / real(Ni, R8)
 
+    call execute_command_line('mkdir -p OUTPUT', wait=.true.)
     open(newunit=unit1, file='OUTPUT/source_axis_k'//trim(k_str)//'.dat')
     write(unit1,'(A)') '# x [m]              source [W/m3]   (axis, r=0)'
     do i = 1, Ni

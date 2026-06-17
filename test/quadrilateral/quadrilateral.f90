@@ -282,6 +282,7 @@ contains
     real(R8) :: x_c
 
     b = 1
+    call execute_command_line('mkdir -p OUTPUT', wait=.true.)
     open(newunit=unit1, file='OUTPUT/heatflux_face3.dat')
     write(unit1,'(A)') '# x [m]              Qtot [W/m2]     (face 3, bottom AB)'
     do i = 1, Nii
