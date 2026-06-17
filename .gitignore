@@ -2,3 +2,6 @@ build
 bin
 CMakePresets.json
 OUTPUT
+test_report*
+*.log
+run_test.sh

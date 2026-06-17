@@ -95,8 +95,10 @@ axs[2].grid(True, alpha=0.3)
 
 plt.tight_layout()
 svg_path = os.path.join(output_dir, f"{folder_name}.svg")
+png_path = os.path.join(output_dir, f"{folder_name}.png")
 plt.savefig(svg_path, bbox_inches="tight", transparent=True)
-print(f"Plot saved: {svg_path}")
+plt.savefig(png_path, dpi=150, bbox_inches="tight")
+print(f"Plot saved: {svg_path}, {png_path}")
 
 if args.plot:
     plt.show()
