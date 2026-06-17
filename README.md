@@ -37,7 +37,7 @@ git clone --recurse-submodules https://github.com/open-hydra/GROOT.git
 cd GROOT
 
 # Build with GNU compilers and OpenMP
-./install.sh build --compiler=gnu --use-openmp
+./install.sh build --compilers=gnu --use-openmp
 
 ```
 

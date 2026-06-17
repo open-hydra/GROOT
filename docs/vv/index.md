@@ -62,7 +62,7 @@ solutions.
 
 ## Running the tests
 
-After building GROOT (`./install.sh build --compiler=gnu`), each test
+After building GROOT (`./install.sh build --compilers=gnu`), each test
 executable is placed in `test/<name>/bin/`.  Run from the test directory:
 
 ```bash

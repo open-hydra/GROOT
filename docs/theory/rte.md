@@ -77,7 +77,7 @@ $$
 where $\hat{\mathbf{n}}$ is the inward wall normal.  For a **black wall**
 ($\varepsilon = 1$) this reduces to $I_w = I_b(T_w)$.
 
-A **specular wall** (used for symmetry planes, `bc = 3`) simply reflects the
+A **specular wall** (used for symmetry planes, `bc = 300`) simply reflects the
 incoming ray: $I_w(\hat{\mathbf{s}}) = I(\hat{\mathbf{s}}^*)$, where
 $\hat{\mathbf{s}}^*$ is the mirror direction.
 

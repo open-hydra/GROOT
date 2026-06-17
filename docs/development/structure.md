@@ -280,7 +280,7 @@ Each of the six faces of a block stores wall quantities:
 
 | Array | Shape | Content |
 |-------|-------|---------|
-| `face(f)%Q` | `(Nx,Ny,Nz, Nr)` | Per-ray incident flux |
+| `face(f)%Q` | `(n1, n2, 0:Ngg)` | Spectral wall heat flux [W/m²] per band |
 | `face(f)%Qtot` | `(n1, n2)` | Total wall heat flux [W/m²] |
 | `face(f)%T` | `(n1, n2)` | Wall temperature [K] |
 | `face(f)%eps` | `(n1, n2)` | Wall emissivity |
@@ -318,7 +318,7 @@ graph LR
 
 ```bash
 # Option A: install.sh (recommended for first build)
-./install.sh build --compiler=gnu
+./install.sh build --compilers=gnu
 
 # Option B: CMake presets (for iterative development)
 ./install.sh compile

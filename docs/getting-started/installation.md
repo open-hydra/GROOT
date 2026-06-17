@@ -55,16 +55,16 @@ Performs a clean configure+build cycle.  Example usage:
 
 ```bash
 # minimal GNU build with OpenMP enabled
-./install.sh build --compiler=gnu --use-openmp
+./install.sh build --compilers=gnu --use-openmp
 
 # full configuration with Intel compilers and all optional features
-./install.sh build --compiler=intel \
+./install.sh build --compilers=intel \
                   --use-openmp\
 ```
 
 Options accepted by `build`
 
-* `--compiler=<gnu|intel>` – select the compiler family (default: `gnu`).
+* `--compilers=<gnu|intel>` – select the compiler family (default: `gnu`).
 * `--use-openmp` – enable OpenMP parallelization.
 * `--include-orion=PATH` – use an external ORION tree instead of the submodule.
 * `--include-finer=PATH` – same for FiNeR.

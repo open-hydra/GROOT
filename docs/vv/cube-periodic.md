@@ -16,7 +16,7 @@ solution ([Homogeneous Cube](homcube.md)).
 | Face | Position | BC |
 |------|----------|----|
 | 1 | $x = 0$ | Black wall ($\varepsilon = 1$, $T_w = 0$ K) |
-| 2 | $x = 0.5$ m | Symmetry plane (`bc = 3`) |
+| 2 | $x = 0.5$ m | Symmetry plane (`bc = 300`) |
 | 3 | $y = 0$ | Black wall |
 | 4 | $y = 0.5$ m | Symmetry plane |
 | 5 | $z = 0$ | Black wall |

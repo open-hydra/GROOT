@@ -116,8 +116,12 @@ The output format is controlled by `sol-format` in `[GROOT-IO]`.
 |-------|--------|
 | `tecplot ascii` | Tecplot ASCII (`.tec`) — default |
 | `tecplot binary` | Tecplot binary (`.szplt`) — requires TecIO |
-| `vtk ascii` | VTK ASCII (`.vtm`) |
-| `vtk raw` | VTK binary (`.vtm`) |
+| `vtk ascii` | VTK ASCII (`.vtm`) — experimental, not yet validated |
+| `vtk raw` | VTK binary (`.vtm`) — experimental, not yet validated |
+
+!!! warning "VTK I/O limitations"
+    - **Input** (`[MOSE-IO]`): reading the gas-phase field in VTK format is not yet functional. Always use `tecplot ascii` or `tecplot binary` for `[MOSE-IO] sol-format`. The wall file (`OUTPUT/wall.tec`) is always read as Tecplot ASCII regardless of this setting.
+    - **Output** (`[GROOT-IO]`): VTK output for `rad-field` and `rad-wall` is implemented but not validated. Use Tecplot formats for production runs.
 
 ### Output Variables
 
@@ -140,12 +144,23 @@ The radiative field file (`rad-field.*`) contains one zone per block. Variables 
     | `a(0)`…`a(4)` | Per-gray-gas weights [–] |
     | `divq` | Radiative source term $\nabla \cdot \mathbf{q}_r$ [W/m³] |
 
+=== "SNBW / SNB"
+
+    | Variable | Description |
+    |----------|-------------|
+    | `Ib` | Blackbody intensity $I_b = \sigma T^4 / \pi$ [W/m²/sr] |
+    | `k` | Planck-mean absorption coefficient $\sum_\eta \bar{\kappa}_\eta\, a_\eta$ [m⁻¹] |
+    | `divq` | Radiative source term $\nabla \cdot \mathbf{q}_r$ [W/m³] |
+
+    !!! note
+        Per-band spectral data are not written to `rad-field`. The Planck-mean `k` is provided as a single representative absorption coefficient for post-processing.
+
 The wall file (`rad-wall.*`) contains one zone per opaque boundary face:
 
 | Variable | Description |
 |----------|-------------|
 | `emissivity` | Wall emissivity $\varepsilon$ [–] |
-| `Q` | Net radiative wall heat flux [W/m²] |
+| `Q` | Net radiative wall heat flux $\varepsilon\,(Q_\text{inc} - \sigma T_w^4)$ [W/m²] |
 | `a(0)`…`a(4)` | WSGG weights at the wall (WSGG models only) |
 
 ---

@@ -15,12 +15,13 @@ graph TD
         subgraph threeD ["3-D cases"]
             HC["homcube/<br/>homogeneous cube"]
             CP["cube_periodic/<br/>cube with periodic BCs"]
-            F3["furnace3d/<br/>Selcuk 1985 box furnace"]
             QD["quadrilateral/<br/>scalene trapezoid slab"]
+            EM["emissivity/<br/>total emissivity vs analytical"]
         end
         subgraph twoD ["2-D axisymmetric cases"]
             FC["finite_cylinder/<br/>cylinder R=1m, L=2m"]
             FS["furnace_source/<br/>furnace with non-uniform T"]
+            NZ["nozzle/<br/>rocket nozzle wall flux"]
         end
     end
 
@@ -38,7 +39,8 @@ graph TD
 | **finite_cylinder** | Cylinder R=1 m, L=2 m | 2-D axisym | Lateral wall flux and axis source vs Python reference |
 | **furnace_source** | Cylinder R=0.45 m, L=5 m | 2-D axisym | Non-uniform T field; source and wall flux vs reference |
 | **quadrilateral** | Scalene trapezoid ABCD | 3-D slab | Wall flux on bilinear TFI mesh |
-| **furnace3d** | Box 5.76×0.96×0.96 m | 3-D | Source and wall flux vs Selcuk 1985 analytical |
+| **emissivity** | Uniform isothermal medium | 3-D | Total emissivity vs analytical for gray, WSGG, SNBW, SNB |
+| **nozzle** | Rocket nozzle wedge mesh | 2-D axisym | Wall heat flux with H₂O+CO₂ CEA profile, four spectral models |
 
 ---
 
@@ -77,7 +79,7 @@ All test executables are built as part of the top-level CMake project
 when `CMAKE_SOURCE_DIR == CMAKE_CURRENT_SOURCE_DIR`:
 
 ```bash
-./install.sh build --compiler=gnu
+./install.sh build --compilers=gnu
 # or, after the first build:
 ./install.sh compile
 ```
@@ -173,5 +175,6 @@ solution exists) or numerically with independent codes:
 | `homcube` | Analytical integral over uniform isothermal cube |
 | `finite_cylinder` | Python script `data/cylinder.py` (numerical integration via `scipy.integrate`) |
 | `furnace_source` | Old GROOT code output |
-| `furnace3d` | Selcuk & Kayakol, Int. J. Heat Mass Transfer (1985) |
+| `emissivity` | Analytical total emissivity formula |
+| `nozzle` | Legacy GROOT run (high-resolution reference) |
 | `quadrilateral` | Old GROOT code (note: old code segfaulted — reference is indicative) |

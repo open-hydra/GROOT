@@ -34,8 +34,8 @@ test/homcube/
 │   ├── ref_source*
 │   └── ref_heatflux*
 └── OUTPUT/            ← solver output (created on run)
-    ├── source_centerline.dat
-    └── heatflux_face1.dat
+    ├── source_centerline_k*.dat
+    └── heatflux_face1_k*.dat
 ```
 
 The test builds a 30 × 30 × 30 mesh and uniform field entirely in memory — no external mesh or field files are needed.
@@ -73,8 +73,8 @@ After the run, the `OUTPUT/` directory contains:
 
 | File | Content |
 |------|---------|
-| `source_centerline.dat` | Radiative source term $\nabla \cdot \mathbf{q}_r$ along the z-axis centreline |
-| `heatflux_face1.dat` | Wall heat flux $Q$ on face 1 (x-min) vs y-coordinate |
+| `source_centerline_k<k>.dat` | Radiative source term $\nabla \cdot \mathbf{q}_r$ along the z-axis centreline (one file per absorption coefficient) |
+| `heatflux_face1_k<k>.dat` | Wall heat flux $Q$ on face 1 (x-min) vs y-coordinate (one file per absorption coefficient) |
 
 Compare against the reference data in `data/`.
 A successful run shows the GROOT solution matching the reference to within a few percent (mesh-dependent).
