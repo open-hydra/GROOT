@@ -24,15 +24,51 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(GNUInstallDirs)
   set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules")
 
+  # Helper: initialize a git submodule from the correct git root
+  macro(ensure_submodule_initialized SUBMOD_PATH)
+    if (NOT EXISTS "${SUBMOD_PATH}/CMakeLists.txt")
+      message(STATUS "Submodule at ${SUBMOD_PATH} not initialized. Attempting git submodule update --init...")
+      get_filename_component(_sm_parent "${SUBMOD_PATH}" DIRECTORY)
+      execute_process(
+        COMMAND git rev-parse --show-toplevel
+        WORKING_DIRECTORY "${_sm_parent}"
+        OUTPUT_VARIABLE _sm_git_root
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE _sm_git_result)
+      if(_sm_git_result EQUAL 0)
+        file(RELATIVE_PATH _sm_rel "${_sm_git_root}" "${SUBMOD_PATH}")
+        execute_process(
+          COMMAND git submodule update --init "${_sm_rel}"
+          WORKING_DIRECTORY "${_sm_git_root}"
+          RESULT_VARIABLE _sm_init_result)
+        if(NOT _sm_init_result EQUAL 0)
+          message(FATAL_ERROR "Failed to initialize submodule: ${SUBMOD_PATH}")
+        endif()
+      else()
+        message(FATAL_ERROR "Could not find git root for submodule: ${SUBMOD_PATH}")
+      endif()
+    endif()
+  endmacro()
+
+  # Path fallbacks (standalone builds)
+  if (NOT DEFINED ORION_PATH)
+    set(ORION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/ORION/")
+  endif()
+  if (NOT DEFINED FINER_PATH)
+    set(FINER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/third_party/FiNeR/")
+  endif()
+
   # ORION
   if(NOT TARGET ORION)
-    set(orionD "${ORION_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/lib/ORION/")
+    ensure_submodule_initialized("${ORION_PATH}")
+    set(orionD "${ORION_PATH}" "${CMAKE_BINARY_DIR}/lib/ORION")
     add_subdirectory(${orionD})
   endif()
 
   # FiNeR  (ini-file reader)
   if(NOT TARGET FiNeR)
-    set(finerD "${FINER_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/lib/third_party/FiNeR/")
+    ensure_submodule_initialized("${FINER_PATH}")
+    set(finerD "${FINER_PATH}" "${CMAKE_BINARY_DIR}/lib/third_party/FiNeR")
     add_subdirectory(${finerD})
   endif()
 
