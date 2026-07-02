@@ -8,6 +8,7 @@ module GROOT_Mod_Phase
   public :: Setup_Face
   public :: Setup_SNBWall
   public :: Setup_WSGGWall
+  public :: Setup_SLWWall
 contains
 
   subroutine Setup_Gas(grid, IOfield_gas)
@@ -272,6 +273,44 @@ contains
       end do
     end do
   end subroutine Setup_WSGGWall
+
+
+  !! ----------------------------------------------------------
+  !! Update face%a with RC-SLW weights at wall temperature (ad-hoc for SLW).
+  !!
+  !! Analogous to Setup_WSGGWall/Setup_SNBWall, but the number of gray gases
+  !! (Ngg = slw_ngray) is user-configurable, so the local weight array is sized
+  !! dynamically on Ngg — it must NOT reuse the fixed (0:4) arrays of Setup_WSGGWall.
+  !! A representative composition (MR = xH2O/xCO2 = 2, i.e. xH2O=2/3, xCO2=1/3,
+  !! CO=0) at the reference pressure p_ref is used to evaluate a(ig, T_wall),
+  !! consistent with the MR=2 approximation used by wsgg-H2OCO2.
+  subroutine Setup_SLWWall(grid)
+    use GROOT_Advanced_Types_m, only: GROOT_domain_type
+    use GROOT_Lib_SLW,          only: co_kslw
+    use GROOT_Global_m,         only: Ngg, p_ref
+    implicit none
+    type(GROOT_domain_type), intent(inout) :: grid
+
+    integer  :: ib, ifa, i1, i2
+    real(R8) :: T_wall
+    real(R8) :: kp_dum(0:Ngg), a_w(0:Ngg)   ! sized on Ngg (NOT fixed 0:4)
+    ! MR=2 reference: xH2O = 2/3, xCO2 = 1/3, CO = 0
+    real(R8), parameter :: XH2O_REF = 2.0_R8 / 3.0_R8
+    real(R8), parameter :: XCO2_REF = 1.0_R8 / 3.0_R8
+
+    do ib = 1, grid%nb
+      do ifa = 1, 6
+        do i2 = 1, grid%blk(ib)%face(ifa)%n(2)
+          do i1 = 1, grid%blk(ib)%face(ifa)%n(1)
+            T_wall = grid%blk(ib)%face(ifa)%T(i1, i2)
+            if (T_wall < 1.0_R8) cycle   ! non-wall or uninitialised face
+            call co_kslw(T_wall, p_ref, XH2O_REF, XCO2_REF, 0.0_R8, Ngg, kp_dum, a_w)
+            grid%blk(ib)%face(ifa)%a(i1, i2, 0:Ngg) = a_w(0:Ngg)
+          end do
+        end do
+      end do
+    end do
+  end subroutine Setup_SLWWall
 
 
   !! ----------------------------------------------------------

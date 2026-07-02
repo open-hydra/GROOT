@@ -25,6 +25,7 @@ contains
     model          = obj_rad_model%model
     eps_wall       = obj_rad_model%eps_wall
     k_user         = obj_rad_model%k_user
+    p_ref          = obj_rad_model%p_ref
 
     !! Constant absorption coefficient flag
     kcost = (trim(model) == 'const')
@@ -34,6 +35,9 @@ contains
       case ('gray', 'const');            Ngg = 0
       case ('wsgg-H2O', 'wsgg-H2OCO2'); Ngg = 4
       case ('snbw', 'snb');              Ngg = 450  ! N_SNB_BANDS in Lib_snbw
+      case ('slw')
+        N_SLW_GASES = obj_rad_model%slw_ngray       ! radlib nGG (gray gases, clear gas excluded)
+        Ngg         = N_SLW_GASES
       case default;                      Ngg = 0
     end select
 

@@ -53,6 +53,8 @@ module GROOT_Config_Types_m
     character(len=llen) :: model              !< Spectral model name
     real(R8)            :: eps_wall           !< Wall emissivity
     real(R8)            :: k_user             !< User-given abs. coeff (model='const')
+    integer             :: slw_ngray          !< Number of SLW gray gases [1-25] (model='slw')
+    real(R8)            :: p_ref              !< Reference pressure [Pa] for SLW wall emission
   end type rad_model_t
   !! ------------------------------------------------------
 

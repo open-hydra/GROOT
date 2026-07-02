@@ -27,6 +27,7 @@ Commands:
     --include-finer=<path>  Set external FiNeR path
     --compilers=<name>      Set compilers (intel, gnu)
     --use-openmp            Use OpenMP
+    --use-radlib            Enable the SLW model via radlib (lib/third_party/radlib-master)
     --debug                 Build in Debug mode (default: Release)
 
   compile                   Compile the program using the CMakePresets file
@@ -79,7 +80,8 @@ function write_presets() {
         "CMAKE_C_COMPILER":        "${CC}",
         "CMAKE_CXX_COMPILER":      "${CXX}",
         "USE_OPENMP":              "${USE_OPENMP}",
-        "USE_MPI":                 "${USE_MPI}"
+        "USE_MPI":                 "${USE_MPI}",
+        "USE_RADLIB":              "${USE_RADLIB}"
       }
     }
   ]
@@ -96,11 +98,12 @@ ORION_PATH=$(pwd)'/lib/ORION/'
 FINER_PATH=$(pwd)'/lib/third_party/FiNeR/'
 USE_OPENMP="false"
 USE_MPI="false"
+USE_RADLIB="false"
 REMOTE="false"
 BUILD_TYPE="RELEASE"
 
 CMD=("build" "compile" "update")
-CMD_OPTIONS_build=("--compilers --include-orion --include-finer --use-openmp --debug")
+CMD_OPTIONS_build=("--compilers --include-orion --include-finer --use-openmp --use-radlib --debug")
 CMD_OPTIONS_update=("--remote")
 
 # Parse global options
@@ -156,6 +159,10 @@ while [[ $# -gt 0 ]]; do
             [[ "$COMMAND" == "build" ]] || { error "--use-openmp is only valid for 'build'"; exit 1; }
             USE_OPENMP="true"
             ;;
+        --use-radlib)
+            [[ "$COMMAND" == "build" ]] || { error "--use-radlib is only valid for 'build'"; exit 1; }
+            USE_RADLIB="true"
+            ;;
         --debug)
             [[ "$COMMAND" == "build" ]] || { error "--debug is only valid for 'build'"; exit 1; }
             BUILD_TYPE="DEBUG"
@@ -183,6 +190,9 @@ case "$COMMAND" in
         task "Cloning submodules"
         [[ $ORION_PATH == $(pwd)'/lib/ORION/' ]]              && git submodule update --init lib/ORION
         [[ $FINER_PATH == $(pwd)'/lib/third_party/FiNeR/' ]]  && git submodule update --init --recursive lib/third_party/FiNeR
+        # radlib is optional (update=none in .gitmodules): only pulled on demand.
+        # --checkout is required to override update=none for this explicit fetch.
+        [[ "$USE_RADLIB" == "true" ]]                         && git submodule update --init --checkout lib/third_party/radlib
 
         task "Configuring and building $project"
         if [[ $COMPILERS == "intel" ]]; then
@@ -212,6 +222,7 @@ case "$COMMAND" in
               -DFINER_PATH="$FINER_PATH" \
               -DUSE_OPENMP="$USE_OPENMP" \
               -DUSE_MPI="$USE_MPI"       \
+              -DUSE_RADLIB="$USE_RADLIB" \
               -DUSE_TECIO=OFF            \
               -DCMAKE_BUILD_TYPE="$BUILD_TYPE" || exit 1
         cmake --build "$BUILD_DIR" || exit 1

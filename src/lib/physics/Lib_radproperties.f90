@@ -22,6 +22,10 @@ module GROOT_Lib_Radproperties
       iCO2 = findindex('CO2')
       iCO  = findindex('CO')
       call read_snb_param(snb_data_path)
+    elseif (model == 'slw') then
+      iH2O = findindex('H2O')
+      iCO2 = findindex('CO2')
+      iCO  = findindex('CO')
     else
 
     endif
@@ -48,6 +52,7 @@ module GROOT_Lib_Radproperties
   subroutine compute_gasproperties(xvec,p,T,fvs,ka,a,Ib,kb)
     use GROOT_Global_m, only: model, nsc, nscdat, ind_species, cfd_species, sigma, pi, k_user, Ngg
     use GROOT_Lib_SNBW, only: co_ksnb, co_ksnb_malkmus
+    use GROOT_Lib_SLW,  only: co_kslw
     implicit none
     real(kind=R8), intent(in)           :: xvec(1:nsc)  !< molar fractions
     real(kind=R8), intent(in)           :: p            !< pressure [Pa]
@@ -105,6 +110,15 @@ module GROOT_Lib_Radproperties
       if (iCO  > 0) xCO_loc = xvec(iCO)
       call co_ksnb_malkmus(T, p, xH2O, xCO2, xCO_loc, ka, a, beta_loc)
       if (present(kb)) kb = beta_loc
+      Ib = sigma*T**4/pi
+    elseif (model == 'slw') then
+      xH2O    = 0.0_R8
+      xCO2    = 0.0_R8
+      xCO_loc = 0.0_R8
+      if (iH2O > 0) xH2O    = xvec(iH2O)
+      if (iCO2 > 0) xCO2    = xvec(iCO2)
+      if (iCO  > 0) xCO_loc = xvec(iCO)
+      call co_kslw(T, p, xH2O, xCO2, xCO_loc, Ngg, ka, a)
       Ib = sigma*T**4/pi
     else
       print *, 'selected model not available: ', trim(model)

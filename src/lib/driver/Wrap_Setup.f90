@@ -17,7 +17,7 @@ contains
     use GROOT_Mod_Allocate_Data,  only: Setup_Data_Structure
     use GROOT_Mod_Metrics,        only: Setup_Metrics, Wedge, Import_Face_Coords
     use GROOT_Mod_Bound,          only: Setup_Bound
-    use GROOT_Mod_Phase,          only: Setup_Gas, Setup_Rad, Setup_Wall, Setup_SNBWall, Setup_WSGGWall
+    use GROOT_Mod_Phase,          only: Setup_Gas, Setup_Rad, Setup_Wall, Setup_SNBWall, Setup_WSGGWall, Setup_SLWWall
     use GROOT_IO_Wall,            only: Initialize_Wall_File
     use Lib_ORION_Data,           only: copyORION, orion_data
     implicit none
@@ -57,6 +57,7 @@ contains
     call Setup_Wall(simulation%domain, IOfield_wall)
     if (trim(model) == 'wsgg-H2O' .or. trim(model) == 'wsgg-H2OCO2') call Setup_WSGGWall(simulation%domain)
     if (trim(model) == 'snbw'     .or. trim(model) == 'snb')          call Setup_SNBWall(simulation%domain)
+    if (trim(model) == 'slw')                                         call Setup_SLWWall(simulation%domain)
 
     !! Copy mesh from gas to rad IOfield
     do ib = 1, simulation%domain%Nb

@@ -27,6 +27,12 @@ contains
     call reg%add(sec, 'k', obj_rad_model%k_user, '1.0', &
         'Absorption coefficient [m^-1] — used only when model = const', '> 0', .false.)
 
+    call reg%add(sec, 'slw_ngray', obj_rad_model%slw_ngray, '4', &
+        'Number of gray gases for the SLW model (model = slw)', '1,25', .false.)
+
+    call reg%add(sec, 'p_ref', obj_rad_model%p_ref, '1.0e5', &
+        'Reference pressure [Pa] for SLW wall emission', '> 0', .false.)
+
     call reg%add(sec, 'species', model_species_str, 'none', &
         'Comma-separated list of radiating species (e.g. "H2O,CO2")', '', .false.)
 
@@ -44,10 +50,11 @@ contains
     integer :: js, check
 
 
-    !! For 'const', 'snbw', 'snb': species looked up internally, no INI species list needed
+    !! For 'const', 'snbw', 'snb', 'slw': species looked up internally, no INI species list needed
     if (trim(obj_rad_model%model) == 'const' .or. &
         trim(obj_rad_model%model) == 'snbw'  .or. &
-        trim(obj_rad_model%model) == 'snb') then
+        trim(obj_rad_model%model) == 'snb'   .or. &
+        trim(obj_rad_model%model) == 'slw') then
       nscrad = 0
       if (allocated(rad_species)) deallocate(rad_species)
       allocate(rad_species(0))

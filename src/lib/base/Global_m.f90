@@ -23,6 +23,8 @@ module GROOT_Global_m
   !! Radiation model flags — set by Assign_Setup
   real(R8)         :: eps_wall
   real(R8)         :: k_user
+  real(R8)         :: p_ref            !< Reference pressure [Pa] for SLW wall emission
+  integer          :: N_SLW_GASES = 4  !< Number of SLW gray gases (radlib nGG), from INI
   character(llen)  :: model
   logical          :: source
   logical          :: kcost
