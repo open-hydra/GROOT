@@ -46,6 +46,16 @@ Controls the format of the radiative solution files written by GROOT (`OUTPUT/ra
 
 | Parameter | Default | Allowed | Required | Description |
 |-----------|---------|---------|----------|-------------|
-| model | `const` | `const`, `gray`, `wsgg-H2O`, `wsgg-H2OCO2`, `snbw`, `snb` | no | Spectral model for the gas-phase absorption coefficient |
+| model | `const` | `const`, `gray`, `wsgg-H2O`, `wsgg-H2OCO2`, `snbw`, `snb`, `slw` | no | Spectral model for the gas-phase absorption coefficient |
 | wall_emissivity | 1.0 | >= 0 | yes | Wall emissivity (uniform, applied to all opaque walls) |
 | k | 1.0 | > 0 | no | Absorption coefficient [m⁻¹] — used only when `model = const` |
+| slw_ngray | 4 | 1–25 | no | Number of gray gases for the SLW model — used only when `model = slw` |
+| p_ref | 1.0e5 | > 0 | no | Reference pressure [Pa] for SLW wall emission — used only when `model = slw` |
+
+!!! note "`model = slw` requires radlib"
+    The SLW model is available only when GROOT is built with the optional
+    **radlib** dependency (`./install.sh build --use-radlib`, or
+    `-DUSE_RADLIB=ON`). A build without radlib will abort at runtime if
+    `model = slw` is selected. See
+    [Spectral Models → SLW](../../theory/spectral-models.md#spectral-line-weighted-sum-of-gray-gases-slw)
+    and [Installation → Optional components](../../getting-started/installation.md#optional-components).

@@ -21,6 +21,11 @@ GROOT depends on several repositories that are included as Git submodules.
 |------------------------------------|-------------------------------------------------------|------------------------------------------|
 | `lib/ORION`                        | `https://github.com/MarcoGrossi92/ORION.git`         | I/O routines (TecIO, VTK, Plot3D, etc.)  |
 | `lib/third_party/FiNeR`            | `https://github.com/szaghi/FiNeR.git`                | INI file parser                      |
+| `lib/third_party/radlib` *(optional)* | `https://github.com/BYUignite/radlib`             | SLW spectral model (RC-SLW) — only when `--use-radlib` |
+
+The `radlib` submodule is **optional** and is *not* pulled by the default
+`git submodule update --init --recursive`. It is fetched on demand only when
+you build with `--use-radlib` (see below).
 
 
 ## Build methods
@@ -66,6 +71,8 @@ Options accepted by `build`
 
 * `--compilers=<gnu|intel>` – select the compiler family (default: `gnu`).
 * `--use-openmp` – enable OpenMP parallelization.
+* `--use-radlib` – enable the optional **SLW** spectral model via radlib. Fetches
+  the `lib/third_party/radlib` submodule and configures with `-DUSE_RADLIB=ON`.
 * `--include-orion=PATH` – use an external ORION tree instead of the submodule.
 * `--include-finer=PATH` – same for FiNeR.
 
@@ -121,7 +128,38 @@ or using the `compile` command of the install script as described above.
 
 ## Optional components
 
+### SLW spectral model (radlib)
 
+The **SLW** (RC-SLW) spectral model is provided by the external
+[radlib](https://github.com/BYUignite/radlib) library (MIT-licensed) and is
+**off by default**. Enable it with:
+
+```bash
+./install.sh build --compilers=gnu --use-openmp --use-radlib
+```
+
+This fetches the `lib/third_party/radlib` submodule (if not already present)
+and configures with `-DUSE_RADLIB=ON`. Equivalently, with a manual CMake build:
+
+```bash
+# --checkout is required: radlib is marked `update = none` in .gitmodules so it is
+# skipped by the default (recursive) submodule update; --checkout overrides that.
+git submodule update --init --checkout lib/third_party/radlib
+cmake -B build -DUSE_RADLIB=ON ...
+```
+
+Notes:
+
+* The ALBDF data files (`*.bin`) are **generated automatically** at build time
+  from the shipped `*.txt` tables (via radlib's `writebin.x`); no extra step or
+  `make install` of radlib is required.
+* radlib is built as a **shared** library (`libradlib.so`); the GROOT executable
+  locates it via its build-tree rpath. When relocating/installing the executable,
+  make sure the shared library is reachable.
+* Once built, select the model with `model = slw` in `[GROOT-Model]`
+  (see [Input Parameters](../user/input/input-parameters.md#groot-model)).
+* Building **without** `--use-radlib` is fully supported; only `model = slw`
+  becomes unavailable.
 
 ## Library linking (advanced)
 
