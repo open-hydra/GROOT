@@ -3,6 +3,10 @@ set(target emissivity)
 add_executable(${target} emissivity.f90)
 target_link_libraries(${target} PRIVATE GROOTL FiNeR::FiNeR)
 
+if(USE_RADLIB)
+  target_compile_definitions(${target} PRIVATE WITH_RADLIB)
+endif()
+
 target_include_directories(${target} INTERFACE
     $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>)
 

@@ -4,11 +4,12 @@
 !! Reads a 1-D axial profile from nozzle.dat (145 stations with
 !! X, R_wall, T, p[bar], xH2O, xCO2 from CEA), builds a 2-D
 !! axisymmetric structured mesh (Ni_ax=50, Nj_rad=20, Nk=1 wedge),
-!! and computes the lateral wall heat flux with four spectral models:
+!! and computes the lateral wall heat flux with several spectral models:
 !!   gray         — gray-gas Planck-mean absorption (H2O + CO2)
 !!   wsgg-H2OCO2  — WSGG by Fabiani et al. (JPP 2025), 4 gray gases
 !!   snbw         — Statistical Narrow Band, weak (Beer-Lambert)
 !!   snb          — Statistical Narrow Band, full Malkmus
+!!   slw          — RC-SLW via radlib (only when built with USE_RADLIB=ON)
 !!
 !! Gas properties vary in the axial direction only.
 !! No CO in the mixture (xCO = 0 throughout).
@@ -32,7 +33,7 @@ program nozzle_test
   use GROOT_Mod_Metrics,       only: Setup_Metrics
   use GROOT_Wrap_Solve,        only: GROOT_solve
   use GROOT_Lib_Radproperties, only: compute_gasproperties, map_species
-  use GROOT_Mod_Phase,         only: Setup_WSGGWall, Setup_SNBWall
+  use GROOT_Mod_Phase,         only: Setup_WSGGWall, Setup_SNBWall, Setup_SLWWall
   use Lib_ORION_Data
   implicit none
 
@@ -61,12 +62,19 @@ program nozzle_test
   real(R8) :: t1, t2
   integer  :: im
 
+#ifdef WITH_RADLIB
+  integer,  parameter  :: N_MODELS = 5
+#else
   integer,  parameter  :: N_MODELS = 4
+#endif
   character(len=16) :: model_list(N_MODELS)
   model_list(1) = 'gray'
   model_list(2) = 'wsgg-H2OCO2'
   model_list(3) = 'snbw'
   model_list(4) = 'snb'
+#ifdef WITH_RADLIB
+  model_list(5) = 'slw'
+#endif
 
   !! ── OpenMP ──────────────────────────────────────────────────
 #if defined (_OPENMP)
@@ -98,6 +106,8 @@ program nozzle_test
   obj_io%sol_format       = 'tecplot ascii'
   obj_io%gas_format       = 'tecplot ascii'
   obj_rad_model%eps_wall  = 1.0_R8    !< eps, overridden per-face in setup_bc
+  obj_rad_model%slw_ngray = 8         !< SLW gray gases (radlib nGG); used only by model=slw
+  obj_rad_model%p_ref     = 1.0e5_R8  !< SLW wall ref. pressure (walls are cold → unused here)
 
   !! ── Load profile ────────────────────────────────────────────
   write(*,'(/,A)') ' Reading nozzle.dat ...'
@@ -115,7 +125,7 @@ program nozzle_test
   call execute_command_line('mkdir -p OUTPUT', wait=.true.)
 
   write(*,'(/,A)') ' ================================================='
-  write(*,'(  A)') ' Nozzle wall heat flux — 4 spectral models'
+  write(*,'(  A,I0,A)') ' Nozzle wall heat flux — ', N_MODELS, ' spectral models'
   write(*,'(  A,I0,A,I0,A)') ' Mesh: ', Ni_ax, ' x ', Nj_rad, ' x 1 (2-D axi)'
   write(*,'(  A,F8.4,A,F8.4,A)') ' X range: [', x_dat(1), ',', x_dat(N_DAT), '] m'
   write(*,'(  A)') ' ================================================='
@@ -315,6 +325,8 @@ contains
         call Setup_WSGGWall(sim%domain)
       case ('snbw', 'snb')
         call Setup_SNBWall(sim%domain)
+      case ('slw')
+        call Setup_SLWWall(sim%domain)   !< no-op here: nozzle walls are cold (T=0)
     end select
 
     !! ── 7. Solve ──

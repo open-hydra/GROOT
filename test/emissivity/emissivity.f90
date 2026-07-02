@@ -3,17 +3,19 @@
 !!
 !! Computes total emissivity of a uniform H2O-CO2 mixture at
 !! fixed composition and path length over a grid of (T, p) values
-!! using three spectral models:
+!! using several spectral models:
 !!   - WSGG   : Fabiani et al. JPP 2025, 4 gray gases
 !!   - SNBW   : SNB weak limit (Beer-Lambert per band)
 !!   - SNB    : SNB full Malkmus transmissivity
+!!   - SLW    : RC-SLW via radlib (only when built with USE_RADLIB=ON)
 !!
 !! Fixed parameters:
 !!   xH2O = 0.2,  xCO2 = 0.1,  xCO = 0.0
 !!   L    = 1.0 m
 !!
 !! Output: OUTPUT/emissivity.dat
-!!   Columns: T[K]  p[bar]  eps_wsgg  eps_snbw  eps_snb
+!!   Columns: T[K]  p[bar]  eps_wsgg  eps_snbw  eps_snb  eps_slw
+!!   (eps_slw = -1 when compiled without radlib)
 !! ============================================================
 program emissivity_test
   use iso_fortran_env,          only: R8 => real64
@@ -22,13 +24,16 @@ program emissivity_test
                                       co_ksnb, co_ksnb_malkmus
   use GROOT_SNB_Datadir,        only: snb_data_path
   use GROOT_Lib_Radproperties,  only: wsggH2OCO2_MR
+#ifdef WITH_RADLIB
+  use GROOT_Lib_SLW,            only: co_kslw
+#endif
   implicit none
 
   ! ---- fixed mixture and geometry ----
   real(R8), parameter :: xH2O = 0.2_R8
   real(R8), parameter :: xCO2 = 0.1_R8
   real(R8), parameter :: xCO  = 0.0_R8
-  real(R8), parameter :: L    = 1.0_R8   ! path length [m]
+  real(R8), parameter :: L    = 0.1_R8   ! path length [m]
 
   ! ---- parameter grids ----
   integer,  parameter :: NT = 6, NP = 5
@@ -36,14 +41,18 @@ program emissivity_test
                              2500.0_R8, 3000.0_R8, 3500.0_R8]  ! [K]
   real(R8) :: p_bar (NP) = [1.0_R8, 10.0_R8, 50.0_R8, 100.0_R8, 300.0_R8] ! [bar]
 
+  ! ---- SLW gray-gas count (radlib nGG; only used when WITH_RADLIB) ----
+  integer,  parameter :: NG_SLW = 20
+
   ! ---- local work arrays ----
   real(R8) :: ka  (0:N_SNB_BANDS)
   real(R8) :: a   (0:N_SNB_BANDS)
   real(R8) :: beta(0:N_SNB_BANDS)
   real(R8) :: kp_wsgg(0:4), a_wsgg(0:4)
+  real(R8) :: ka_slw(0:NG_SLW), a_slw(0:NG_SLW)
 
   real(R8) :: T, p_pa, tau
-  real(R8) :: eps_wsgg, eps_snbw, eps_snb
+  real(R8) :: eps_wsgg, eps_snbw, eps_snb, eps_slw
   integer  :: iT, ip, ig, unit_out
 
   ! ---- load SNB database ----
@@ -54,9 +63,9 @@ program emissivity_test
 
   open(newunit=unit_out, file='OUTPUT/emissivity.dat', action='write')
   write(unit_out,'(A)') '# Homogeneous column emissivity: xH2O=0.2  xCO2=0.1  xCO=0.0  L=1m'
-  write(unit_out,'(A)') '#'//repeat('-',65)
-  write(unit_out,'(A)') '#   T[K]   p[bar]    eps_wsgg    eps_snbw    eps_snb'
-  write(unit_out,'(A)') '#'//repeat('-',65)
+  write(unit_out,'(A)') '#'//repeat('-',77)
+  write(unit_out,'(A)') '#   T[K]   p[bar]    eps_wsgg    eps_snbw    eps_snb     eps_slw'
+  write(unit_out,'(A)') '#'//repeat('-',77)
 
   do iT = 1, NT
     T = T_vals(iT)
@@ -85,7 +94,22 @@ program emissivity_test
         eps_snb = eps_snb + a(ig) * (1.0_R8 - tau)
       end do
 
-      write(unit_out,'(F8.1, F8.1, 3F12.6)') T, p_bar(ip), eps_wsgg, eps_snbw, eps_snb
+      ! ---- SLW (RC-SLW via radlib) : Beer-Lambert per gray gas ----
+      ! -1 = not available (no radlib, or T/p outside radlib's ALBDF table range:
+      !      T in 300-3000 K, p in 0.1-50 atm; beyond that radlib extrapolates/aborts)
+      eps_slw = -1.0_R8
+#ifdef WITH_RADLIB
+      if (p_bar(ip) <= 50.0_R8 .and. T <= 3000.0_R8) then   ! radlib SLW valid range
+        call co_kslw(T, p_pa, xH2O, xCO2, xCO, NG_SLW, ka_slw, a_slw)
+        eps_slw = 0.0_R8
+        do ig = 0, NG_SLW
+          eps_slw = eps_slw + a_slw(ig) * (1.0_R8 - exp(-ka_slw(ig) * L))
+        end do
+      end if
+#endif
+
+      write(unit_out,'(F8.1, F8.1, 4F12.6)') T, p_bar(ip), &
+        eps_wsgg, eps_snbw, eps_snb, eps_slw
     end do
     write(unit_out,*)
   end do
@@ -94,7 +118,7 @@ program emissivity_test
 
   write(*,'(A)') ''
   write(*,'(A)') ' Emissivity table written to OUTPUT/emissivity.dat'
-  write(*,'(A)') ' Columns: T[K]  p[bar]  eps_wsgg  eps_snbw  eps_snb'
+  write(*,'(A)') ' Columns: T[K]  p[bar]  eps_wsgg  eps_snbw  eps_snb  eps_slw'
   write(*,'(A)') ''
 
 end program emissivity_test
