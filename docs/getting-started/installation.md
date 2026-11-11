@@ -27,7 +27,12 @@ GROOT depends on several repositories that are included as Git submodules.
 
 | Path                               | Repository URL                                        | Purpose                                  |
 |------------------------------------|-------------------------------------------------------|------------------------------------------|
-| `lib/third_party/FiNeR`            | `https://github.com/szaghi/FiNeR.git`                | INI file parser                      |
+| `lib/third_party/FiNeR`            | `https://github.com/szaghi/FiNeR.git`                | INI file parser (v2.3.0)             |
+| `lib/third_party/PENF`             | `https://github.com/szaghi/PENF.git`                 | library of FiNeR (v2.0.1)            |
+| `lib/third_party/FACE`             | `https://github.com/szaghi/FACE.git`                 | library of FiNeR (v1.1.17)           |
+| `lib/third_party/FLAP`             | `https://github.com/szaghi/FLAP.git`                 | library of FiNeR (v2.5.3)            |
+| `lib/third_party/BeFoR64`          | `https://github.com/szaghi/BeFoR64.git`              | library of FiNeR (v1.2.4)            |
+| `lib/third_party/StringiFor`       | `https://github.com/szaghi/StringiFor.git`           | library of FiNeR (v1.8.0)            |
 | `lib/third_party/radlib` *(optional)* | `https://github.com/BYUignite/radlib`             | SLW spectral model (RC-SLW) — only when `--use-radlib` |
 
 The `radlib` submodule is **optional** and is *not* pulled by the default

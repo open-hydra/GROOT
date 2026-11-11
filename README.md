@@ -57,7 +57,7 @@ See the [Quick Start](https://open-hydra.github.io/GROOT/getting-started/quick-s
 ## Dependencies
 
 GROOT is built on top of several companion libraries: ORION by release (any 2.x from 2.1.0 on, checked out by the
-configure), FiNeR as a Git submodule:
+configure), FiNeR and its five libraries (PENF, FACE, FLAP, BeFoR64, StringiFor) as Git submodules:
 
 | Library | Role |
 |---|---|

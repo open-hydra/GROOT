@@ -200,7 +200,11 @@ case "$COMMAND" in
         task "Building $project"
 
         task "Cloning submodules"
-        [[ $FINER_PATH == $(pwd)'/lib/third_party/FiNeR/' ]]  && git submodule update --init --recursive lib/third_party/FiNeR
+        if [[ $FINER_PATH == $(pwd)'/lib/third_party/FiNeR/' ]]; then
+          # FiNeR and its five libraries (PENF, FACE, FLAP, BeFoR64, StringiFor): CMake adds the libraries before FiNeR
+          git submodule update --init lib/third_party/FiNeR lib/third_party/PENF lib/third_party/FACE \
+                                      lib/third_party/FLAP lib/third_party/BeFoR64 lib/third_party/StringiFor
+        fi
         # radlib is optional (update=none in .gitmodules): only pulled on demand.
         # --checkout is required to override update=none for this explicit fetch.
         [[ "$USE_RADLIB" == "true" ]]                         && git submodule update --init --checkout lib/third_party/radlib
