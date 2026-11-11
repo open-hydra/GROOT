@@ -56,7 +56,8 @@ See the [Quick Start](https://open-hydra.github.io/GROOT/getting-started/quick-s
 
 ## Dependencies
 
-GROOT is built on top of several companion libraries, included as Git submodules:
+GROOT is built on top of several companion libraries: ORION by release (any 2.x from 2.1.0 on, checked out by the
+configure), FiNeR as a Git submodule:
 
 | Library | Role |
 |---|---|
@@ -72,7 +73,7 @@ GROOT/
 ├── src/
 │   ├── app/           # Main application
 │   └── lib/           # Solver library sources
-├── lib/               # Git submodule dependencies
+├── lib/               # Dependencies (Git submodules; ORION checked out by the configure)
 ├── test/              # Verification & validation cases
 │   └── ...
 ├── docs/              # MkDocs documentation source

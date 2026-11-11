@@ -51,19 +51,24 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   endmacro()
 
   # Path fallbacks (standalone builds)
-  if (NOT DEFINED ORION_PATH)
-    set(ORION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/ORION/")
-  endif()
   if (NOT DEFINED FINER_PATH)
     set(FINER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/third_party/FiNeR/")
   endif()
 
-  # ORION
-  if(NOT TARGET ORION)
-    ensure_submodule_initialized("${ORION_PATH}")
-    set(orionD "${ORION_PATH}" "${CMAKE_BINARY_DIR}/lib/ORION")
-    add_subdirectory(${orionD})
+  # ORION: the newest release that satisfies the requirement below, checked out in lib/ORION (cmake/SemVerDeps.cmake). The
+  # release stays that of the lock file deps.lock (not tracked), -DSEMVER_UPDATE=ALL selects the newest one again.
+  # -DORION_PATH=<path> (or -DFETCHCONTENT_SOURCE_DIR_ORION=<path>) builds a local checkout instead; lib/ORION itself,
+  # which the presets of the former submodule name, is not one. A project that adds GROOT chooses the release of its build
+  # tree
+  if (ORION_PATH AND NOT FETCHCONTENT_SOURCE_DIR_ORION)
+    get_filename_component(_orion_path "${ORION_PATH}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    if (NOT _orion_path STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/lib/ORION")
+      set(FETCHCONTENT_SOURCE_DIR_ORION "${_orion_path}")
+    endif()
   endif()
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/SemVerDeps.cmake)
+  semver_dependency(ORION GIT_REPOSITORY https://github.com/MarcoGrossi92/ORION.git VERSION 2.1 SOURCE_DIR lib/ORION)
+  FetchContent_MakeAvailable(ORION)
 
   # FiNeR  (ini-file reader)
   if(NOT TARGET FiNeR)

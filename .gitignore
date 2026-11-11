@@ -5,3 +5,7 @@ OUTPUT
 test_report*
 *.log
 run_test.sh
+
+# Release of ORION checked out by the configure (cmake/SemVerDeps.cmake), and the one selected
+deps.lock
+lib/ORION
