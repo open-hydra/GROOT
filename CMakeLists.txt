@@ -51,19 +51,37 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   endmacro()
 
   # Path fallbacks (standalone builds)
-  if (NOT DEFINED ORION_PATH)
-    set(ORION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/ORION/")
-  endif()
   if (NOT DEFINED FINER_PATH)
     set(FINER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/third_party/FiNeR/")
   endif()
-
-  # ORION
-  if(NOT TARGET ORION)
-    ensure_submodule_initialized("${ORION_PATH}")
-    set(orionD "${ORION_PATH}" "${CMAKE_BINARY_DIR}/lib/ORION")
-    add_subdirectory(${orionD})
+  if (NOT DEFINED FINER_DEPS_PATH)
+    set(FINER_DEPS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/third_party/")
   endif()
+
+  # ORION: the newest release that satisfies the requirement below, checked out in lib/ORION (cmake/SemVerDeps.cmake). The
+  # release stays that of the lock file deps.lock (not tracked), -DSEMVER_UPDATE=ALL selects the newest one again.
+  # -DORION_PATH=<path> (or -DFETCHCONTENT_SOURCE_DIR_ORION=<path>) builds a local checkout instead; lib/ORION itself,
+  # which the presets of the former submodule name, is not one. A project that adds GROOT chooses the release of its build
+  # tree
+  if (ORION_PATH AND NOT FETCHCONTENT_SOURCE_DIR_ORION)
+    get_filename_component(_orion_path "${ORION_PATH}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    if (NOT _orion_path STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/lib/ORION")
+      set(FETCHCONTENT_SOURCE_DIR_ORION "${_orion_path}")
+    endif()
+  endif()
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/SemVerDeps.cmake)
+  semver_dependency(ORION GIT_REPOSITORY https://github.com/MarcoGrossi92/ORION.git VERSION 2.1 SOURCE_DIR lib/ORION)
+  FetchContent_MakeAvailable(ORION)
+
+  # Libraries of FiNeR: FiNeR 2.0.7 and later do not carry them as submodules (its CMake build expects them in its
+  # src/third_party/, fetched with FoBiS) and add each one only when the target is not defined yet: GROOT provides
+  # them, in the order of their dependencies (FLAP needs PENF and FACE, StringiFor needs PENF and BeFoR64)
+  foreach (finer_dep PENF FACE FLAP BeFoR64 StringiFor)
+    if (NOT TARGET ${finer_dep})
+      ensure_submodule_initialized("${FINER_DEPS_PATH}/${finer_dep}")
+      add_subdirectory("${FINER_DEPS_PATH}/${finer_dep}" "${CMAKE_BINARY_DIR}/lib/third_party/${finer_dep}")
+    endif()
+  endforeach()
 
   # FiNeR  (ini-file reader)
   if(NOT TARGET FiNeR)

@@ -261,7 +261,7 @@ contains
     type(orion_data), intent(inout) :: IOfield
     character(512)       :: line
     character(len=hlen)  :: wallfile
-    integer        :: unitfree, napex, i, j, ios, b
+    integer        :: unitfree, i, j, ios, b
     integer        :: nvar_data       !! data vars = total vars - 3 coords
     integer        :: Ni_b, Nk_b     !! current block dimensions
     integer        :: idata           !! line counter within zone data section
@@ -276,8 +276,17 @@ contains
     io_error = tec_read_structured_multiblock(orion=IOfield, filename=trim(wallfile))
 
     open(newunit=unitfree, file=trim(wallfile), status='old')
+    !! nvar_data and nT from the variable names ORION has read, quoted or not (ORION 2 writes them bare)
     nT        = 0
     nvar_data = 0
+    if (allocated(IOfield%varnames)) then
+      nvar_data = size(IOfield%varnames) - 3
+      nT        = findloc(IOfield%varnames, 'Tw', dim=1) - 3
+    end if
+    if (nT < 1) then
+      write(*,'(A)') ' [ERROR] No variable Tw read from '//trim(wallfile)
+      error stop
+    end if
     b         = 0
     in_data   = .false.
     idata     = 0
@@ -320,19 +329,6 @@ contains
         cycle
       end if
 
-      !! VARIABLES line — extract nvar_data and nT (first occurrence only)
-      if (index(line, 'VARIABLES') /= 0 .and. nT == 0) then
-        nvar_data = count_char(line, '"') / 2 - 3
-        do i = 1, len_trim(line) - 1
-          if (line(i:i) == 'T' .and. line(i+1:i+1) == 'w') then
-            napex = count_char(line(1:i-2), '"')
-            nT = (napex - 6) / 2 + 1
-            exit
-          end if
-        end do
-        cycle
-      end if
-
       !! Manual data read for degenerate (Nj was 0) zones
       if (in_data) then
         idata = idata + 1
@@ -370,16 +366,5 @@ contains
     end if
   end subroutine resolve_vtk_input_paths
 
-
-  !! ----------------------------------------------------------
-  !! Count occurrences of character c in string s
-  pure integer function count_char(s, c)
-    character(len=*), intent(in) :: s, c
-    integer :: i
-    count_char = 0
-    do i = 1, len(s)
-      if (s(i:i) == c) count_char = count_char + 1
-    end do
-  end function count_char
 
 end module GROOT_IO_Solution

@@ -13,14 +13,26 @@ Before attempting to build GROOT make sure your system provides the following ex
 - **Fortran compiler** – either the GNU toolchain (`gfortran`) or Intel/oneAPI (`ifort`/`ifx`) are supported..
 - **OpenMP** – needed for optional parallelization support.
 
+### ORION, by release
+
+GROOT requires [ORION](https://github.com/MarcoGrossi92/ORION) by release: any 2.x from 2.1.0 on (`VERSION 2.1` in
+`CMakeLists.txt`, through `cmake/SemVerDeps.cmake`). The first configuration selects the newest such release on GitHub
+and checks it out in `lib/ORION` (git-ignored); the file `deps.lock` (git-ignored) keeps it, so that the next
+configurations use it without the network. `-DSEMVER_UPDATE=ALL` (`./install.sh build --update-deps`) selects the
+newest release again; `-DORION_PATH=<path>` (`--include-orion=<path>`) builds a local ORION checkout instead.
+
 ### Git submodules
 
 GROOT depends on several repositories that are included as Git submodules.
 
 | Path                               | Repository URL                                        | Purpose                                  |
 |------------------------------------|-------------------------------------------------------|------------------------------------------|
-| `lib/ORION`                        | `https://github.com/MarcoGrossi92/ORION.git`         | I/O routines (TecIO, VTK, Plot3D, etc.)  |
-| `lib/third_party/FiNeR`            | `https://github.com/szaghi/FiNeR.git`                | INI file parser                      |
+| `lib/third_party/FiNeR`            | `https://github.com/szaghi/FiNeR.git`                | INI file parser (v2.3.0)             |
+| `lib/third_party/PENF`             | `https://github.com/szaghi/PENF.git`                 | library of FiNeR (v2.0.1)            |
+| `lib/third_party/FACE`             | `https://github.com/szaghi/FACE.git`                 | library of FiNeR (v1.1.17)           |
+| `lib/third_party/FLAP`             | `https://github.com/szaghi/FLAP.git`                 | library of FiNeR (v2.5.3)            |
+| `lib/third_party/BeFoR64`          | `https://github.com/szaghi/BeFoR64.git`              | library of FiNeR (v1.2.4)            |
+| `lib/third_party/StringiFor`       | `https://github.com/szaghi/StringiFor.git`           | library of FiNeR (v1.8.0)            |
 | `lib/third_party/radlib` *(optional)* | `https://github.com/BYUignite/radlib`             | SLW spectral model (RC-SLW) — only when `--use-radlib` |
 
 The `radlib` submodule is **optional** and is *not* pulled by the default
@@ -73,8 +85,9 @@ Options accepted by `build`
 * `--use-openmp` – enable OpenMP parallelization.
 * `--use-radlib` – enable the optional **SLW** spectral model via radlib. Fetches
   the `lib/third_party/radlib` submodule and configures with `-DUSE_RADLIB=ON`.
-* `--include-orion=PATH` – use an external ORION tree instead of the submodule.
-* `--include-finer=PATH` – same for FiNeR.
+* `--include-orion=PATH` – build a local ORION checkout instead of the release.
+* `--update-deps` – select again the newest ORION release that GROOT accepts (it replaces the one of `deps.lock`).
+* `--include-finer=PATH` – use an external FiNeR tree instead of the submodule.
 
 The script sets up environment variables for the chosen compilers and then invokes CMake. After a successful build, a `CMakePresets.json` file is written in the source root so that subsequent compilations can reuse the configuration.
 
@@ -107,7 +120,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_Fortran_COMPILER=gfortran \  # or ifx
     -DUSE_OPENMP=ON \                    # or OFF
-    -DORION_PATH=/path/to/ORION \        # optional
+    -DORION_PATH=/path/to/ORION \        # optional: a local checkout instead of the release
     -DFINER_PATH=/path/to/FiNeR          # optional
 cmake --build . --parallel
 ```

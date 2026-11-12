@@ -32,9 +32,10 @@ GROOT/
 │           └── lib_rte.f90            #   RTE solve loop
 │
 ├── lib/                     # External dependencies (git submodules)
-│   ├── ORION/               # Structured-grid I/O library
+│   ├── ORION/               # Structured-grid I/O library (a release, checked out by the configure)
 │   └── third_party/
-│       └── FiNeR/           # INI file parser
+│       ├── FiNeR/           # INI file parser
+│       └── PENF/ FACE/ FLAP/ BeFoR64/ StringiFor/  # Libraries of FiNeR
 │
 ├── test/                    # Validation test suite
 │   ├── homcube/             #   Homogeneous cube (3-D)
@@ -337,8 +338,9 @@ Key CMake options:
 
 | Variable | Default | Library |
 |----------|---------|---------|
-| `ORION_PATH` | `lib/ORION/` | ORION I/O |
+| `ORION_PATH` | none: the release of `deps.lock`, or the newest 2.x from 2.1.0 on, in `lib/ORION/` | ORION I/O (a local checkout) |
 | `FINER_PATH` | `lib/third_party/FiNeR/` | FiNeR INI parser |
+| `FINER_DEPS_PATH` | `lib/third_party/` | The five libraries of FiNeR (PENF, FACE, FLAP, BeFoR64, StringiFor) |
 
 ---
 

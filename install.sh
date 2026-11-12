@@ -23,8 +23,9 @@ Global Options:
 
 Commands:
   build                     Perform a full build
-    --include-orion=<path>  Set external ORION path
+    --include-orion=<path>  Build a local ORION checkout instead of a release
     --include-finer=<path>  Set external FiNeR path
+    --update-deps           Select again the newest release of ORION (deps.lock)
     --compilers=<name>      Set compilers (intel, gnu)
     --use-openmp            Use OpenMP
     --use-radlib            Enable the SLW model via radlib (lib/third_party/radlib-master)
@@ -59,6 +60,11 @@ function write_presets() {
   FC=$(grep  '^CMAKE_Fortran_COMPILER:FILEPATH=' "$BUILD_DIR/CMakeCache.txt" | cut -d= -f2-)
   CC=$(grep  '^CMAKE_C_COMPILER:FILEPATH='       "$BUILD_DIR/CMakeCache.txt" | cut -d= -f2-)
   CXX=$(grep '^CMAKE_CXX_COMPILER:FILEPATH='     "$BUILD_DIR/CMakeCache.txt" | cut -d= -f2-)
+  # the local ORION checkout, when given
+  local sources=""
+  if [[ -n $ORION_PATH ]]; then
+    sources+="        \"ORION_PATH\":              \"${ORION_PATH}\","$'\n'
+  fi
 
   cat <<EOF > CMakePresets.json
 {
@@ -73,8 +79,7 @@ function write_presets() {
       "description": "Default preset",
       "binaryDir": "\${sourceDir}/build",
       "cacheVariables": {
-        "ORION_PATH":              "${ORION_PATH}",
-        "FINER_PATH":              "${FINER_PATH}",
+${sources}        "FINER_PATH":              "${FINER_PATH}",
         "CMAKE_BUILD_TYPE":        "${BUILD_TYPE}",
         "CMAKE_Fortran_COMPILER":  "${FC}",
         "CMAKE_C_COMPILER":        "${CC}",
@@ -94,7 +99,9 @@ EOF
 # Defaults
 COMMAND=""
 COMPILERS=""
-ORION_PATH=$(pwd)'/lib/ORION/'
+# ORION: the release of deps.lock, or the newest one that GROOT accepts (see CMakeLists.txt)
+ORION_PATH=""
+UPDATE_DEPS="false"
 FINER_PATH=$(pwd)'/lib/third_party/FiNeR/'
 USE_OPENMP="false"
 USE_MPI="false"
@@ -103,7 +110,7 @@ REMOTE="false"
 BUILD_TYPE="RELEASE"
 
 CMD=("build" "compile" "update")
-CMD_OPTIONS_build=("--compilers --include-orion --include-finer --use-openmp --use-radlib --debug")
+CMD_OPTIONS_build=("--compilers --include-orion --include-finer --update-deps --use-openmp --use-radlib --debug")
 CMD_OPTIONS_update=("--remote")
 
 # Parse global options
@@ -141,11 +148,16 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --include-orion=*)
             [[ "$COMMAND" == "build" ]] || { error "--include-orion is only valid for 'build'"; exit 1; }
-            ORION_PATH="${1#*=}"
+            # absolute: CMake takes the folder from the build directory
+            ORION_PATH=$(cd "${1#*=}" && pwd) || { error "No folder ${1#*=}"; exit 1; }
             ;;
         --include-finer=*)
             [[ "$COMMAND" == "build" ]] || { error "--include-finer is only valid for 'build'"; exit 1; }
             FINER_PATH="${1#*=}"
+            ;;
+        --update-deps)
+            [[ "$COMMAND" == "build" ]] || { error "--update-deps is only valid for 'build'"; exit 1; }
+            UPDATE_DEPS="true"
             ;;
         --compilers=*)
             [[ "$COMMAND" == "build" ]] || { error "--compilers is only valid for 'build'"; exit 1; }
@@ -188,8 +200,11 @@ case "$COMMAND" in
         task "Building $project"
 
         task "Cloning submodules"
-        [[ $ORION_PATH == $(pwd)'/lib/ORION/' ]]              && git submodule update --init lib/ORION
-        [[ $FINER_PATH == $(pwd)'/lib/third_party/FiNeR/' ]]  && git submodule update --init --recursive lib/third_party/FiNeR
+        if [[ $FINER_PATH == $(pwd)'/lib/third_party/FiNeR/' ]]; then
+          # FiNeR and its five libraries (PENF, FACE, FLAP, BeFoR64, StringiFor): CMake adds the libraries before FiNeR
+          git submodule update --init lib/third_party/FiNeR lib/third_party/PENF lib/third_party/FACE \
+                                      lib/third_party/FLAP lib/third_party/BeFoR64 lib/third_party/StringiFor
+        fi
         # radlib is optional (update=none in .gitmodules): only pulled on demand.
         # --checkout is required to override update=none for this explicit fetch.
         [[ "$USE_RADLIB" == "true" ]]                         && git submodule update --init --checkout lib/third_party/radlib
@@ -207,7 +222,8 @@ case "$COMMAND" in
 
         log "Build dir:   $BUILD_DIR"
         log "Build type:  $BUILD_TYPE"
-        log "ORION path:  $ORION_PATH"
+        log "ORION:       ${ORION_PATH:-release}"
+        log "Update ORION: $UPDATE_DEPS"
         log "FINER path:  $FINER_PATH"
         log "Use OpenMP:  $USE_OPENMP"
         if [[ -z "${FC+x}" || -z "${CXX+x}" || -z "${CC+x}" ]]; then
@@ -216,10 +232,16 @@ case "$COMMAND" in
           log "Compilers: FC=$FC, CXX=$CXX, CC=$CC"
         fi
 
+        CMAKE_ARGS=(-DFINER_PATH="$FINER_PATH")
+        if [[ -n $ORION_PATH ]]; then
+          CMAKE_ARGS+=(-DORION_PATH="$ORION_PATH")
+        fi
+        if [[ $UPDATE_DEPS == "true" ]]; then
+          CMAKE_ARGS+=(-DSEMVER_UPDATE=ALL)
+        fi
+
         rm -rf "$BUILD_DIR"
-        cmake -B "$BUILD_DIR" \
-              -DORION_PATH="$ORION_PATH" \
-              -DFINER_PATH="$FINER_PATH" \
+        cmake -B "$BUILD_DIR" "${CMAKE_ARGS[@]}" \
               -DUSE_OPENMP="$USE_OPENMP" \
               -DUSE_MPI="$USE_MPI"       \
               -DUSE_RADLIB="$USE_RADLIB" \
