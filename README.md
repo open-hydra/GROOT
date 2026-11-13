@@ -77,7 +77,7 @@ GROOT/
 ├── lib/               # External libraries
 ├── test/              # Verification & validation cases
 │   └── ...
-├── docs/              # MkDocs documentation source
+├── docs/              # documentation source (Zensical, mkdocs.yml)
 ├── cmake/             # CMake modules
 ├── install.sh         # Build helper script
 └── CMakeLists.txt

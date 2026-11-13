@@ -45,7 +45,7 @@ GROOT/
 │   ├── quadrilateral/       #   Scalene trapezoid enclosure
 │   └── furnace3d/           #   3-D box furnace (Selcuk 1985)
 │
-├── docs/                    # MkDocs documentation source
+├── docs/                    # This documentation (Zensical, mkdocs.yml)
 ├── cmake/                   # CMake modules (compiler flags, OpenMP, etc.)
 ├── bin/                     # Built executables (GROOT)
 └── build/                   # Build artefacts
