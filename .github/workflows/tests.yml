@@ -1,8 +1,9 @@
 # Tests of GROOT on GitHub, in the form of FUSS's ctest.yml: gfortran, the cmake call of install.sh (ORION by release
 # range, FiNeR as a submodule), and every test program of test/. GROOT's tests are programs, not
 # CTest tests: each step below runs one in its folder (it writes OUTPUT/ there), then its verify.py where it has one
-# (exit 1 above its threshold). None of them reads or writes a Tecplot file: they build mesh and field in memory.
-# docs.yml (mkdocs deploy) is separate.
+# (exit 1 above its threshold). They build mesh and field in memory and read no case file; only vtk_io writes and reads
+# VTK files, which it makes itself.
+# docs.yml (the Zensical site) is separate.
 name: Tests
 
 on:
@@ -131,12 +132,10 @@ jobs:
           ulimit -s unlimited
           ./bin/furnace
 
-      - name: "furnace_source: sources at 25 % and 75 % of R and wall flux against a legacy GROOT run (15 %)"
-        # Known failure at main (8abd4be), with gfortran and with ifx: source_j25 at x = 0.124 m, the first of the 20
-        # reference points, is 6 388 against 69 261 (90.78 %); the other 19 are within 1 %. Reported, not counted, until
-        # the reference or the threshold is settled; then delete continue-on-error.
+      - name: "furnace_source: sources at 25 % and 75 % of R and wall flux against a legacy GROOT run (15 %, first point of j25 neglected)"
+        # The first of the 20 reference points of source_j25, x = 0.124 m, is not counted (verify.py): 6 388 against
+        # 69 261 (90.78 %), with gfortran and with ifx; the other 19 are within 1 %.
         if: ${{ !cancelled() && steps.furnace.outcome == 'success' }}
-        continue-on-error: true
         working-directory: test/furnace_source
         run: python verify.py
 
@@ -170,3 +169,11 @@ jobs:
               assert np.isfinite(a).all(), f"heatflux_nozzle_{m}.dat: a value that is not finite"
           print("heatflux_nozzle_*.dat: 4 files of 100 rows, finite")
           EOF
+
+      - name: "vtk_io: VTK gas field read, solution and wall files written and read back, ascii and raw; no reference: round trip"
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        working-directory: test/vtk_io
+        timeout-minutes: 10
+        run: |
+          ulimit -s unlimited
+          ./bin/vtk_io

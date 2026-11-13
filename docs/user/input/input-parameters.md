@@ -8,10 +8,9 @@ Controls the format of the gas-phase field file written by MOSE and read by GROO
 |-----------|---------|---------|----------|-------------|
 | sol-format | `tecplot ascii` | `tecplot ascii`, `tecplot binary`, `vtk ascii`, `vtk raw` | no | Format and encoding of the MOSE gas-phase field file |
 
-!!! warning "VTK input not yet fully supported"
-    Reading the gas-phase field in VTK format (`vtk ascii` / `vtk raw`) is not yet functional.
-    Use `tecplot ascii` or `tecplot binary` for `[MOSE-IO] sol-format`.
-    The wall file (`OUTPUT/wall.tec`) is always read as Tecplot ASCII regardless of this setting.
+!!! note
+    With `vtk ascii` or `vtk raw` GROOT reads `OUTPUT/field.vtm` and the block files it lists (in `OUTPUT/vtk/`).
+    The wall file (`OUTPUT/wall.tec`) is always read as Tecplot ASCII, whatever this setting.
 
 ## [GROOT-IO]
 
@@ -21,9 +20,8 @@ Controls the format of the radiative solution files written by GROOT (`OUTPUT/ra
 |-----------|---------|---------|----------|-------------|
 | sol-format | `tecplot ascii` | `tecplot ascii`, `tecplot binary`, `vtk ascii`, `vtk raw` | no | Format and encoding of the GROOT output files |
 
-!!! warning "VTK output experimental"
-    VTK output (`vtk ascii` / `vtk raw`) for `rad-field` and `rad-wall` is implemented but not yet validated.
-    Prefer `tecplot ascii` or `tecplot binary` for production runs.
+!!! note
+    With `vtk ascii` or `vtk raw` GROOT writes `OUTPUT/rad-field.vtm` and `OUTPUT/rad-wall.vtm`; their block files are in `OUTPUT/vtk/`.
 
 ## [GROOT-Discretization]
 

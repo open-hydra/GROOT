@@ -17,6 +17,7 @@ graph TD
             CP["cube_periodic/<br/>cube with periodic BCs"]
             QD["quadrilateral/<br/>scalene trapezoid slab"]
             EM["emissivity/<br/>total emissivity vs analytical"]
+            VT["vtk_io/<br/>VTK read and write"]
         end
         subgraph twoD ["2-D axisymmetric cases"]
             FC["finite_cylinder/<br/>cylinder R=1m, L=2m"]
@@ -41,6 +42,7 @@ graph TD
 | **quadrilateral** | Scalene trapezoid ABCD | 3-D slab | Wall flux on bilinear TFI mesh |
 | **emissivity** | Uniform isothermal medium | 3-D | Total emissivity vs analytical for gray, WSGG, SNBW, SNB |
 | **nozzle** | Rocket nozzle wedge mesh | 2-D axisym | Wall heat flux with H₂O+CO₂ CEA profile, four spectral models |
+| **vtk_io** | Two small blocks | 3-D | VTK ascii and raw: gas field read, solution and wall files written and read back |
 
 ---
 
@@ -177,4 +179,5 @@ solution exists) or numerically with independent codes:
 | `furnace_source` | Old GROOT code output |
 | `emissivity` | Analytical total emissivity formula |
 | `nozzle` | Legacy GROOT run (high-resolution reference) |
+| `vtk_io` | None: what is written is read back and compared (exactly for `raw`, to 10⁻⁶ for `ascii`) |
 | `quadrilateral` | Old GROOT code (note: old code segfaulted — reference is indicative) |
