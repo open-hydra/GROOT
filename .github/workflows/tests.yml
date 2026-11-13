@@ -1,13 +1,11 @@
 # Tests of GROOT on GitHub, in the form of FUSS's ctest.yml: gfortran, the cmake call of install.sh (ORION by release
-# range, FiNeR and its five libraries as submodules), and every test program of test/. GROOT's tests are programs, not
+# range, FiNeR as a submodule), and every test program of test/. GROOT's tests are programs, not
 # CTest tests: each step below runs one in its folder (it writes OUTPUT/ there), then its verify.py where it has one
 # (exit 1 above its threshold). None of them reads or writes a Tecplot file: they build mesh and field in memory.
 # docs.yml (mkdocs deploy) is separate.
 name: Tests
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -35,9 +33,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # lib/third_party/{FiNeR, PENF, FACE, FLAP, BeFoR64, StringiFor}; radlib (the optional SLW model) has
-          # update = none in .gitmodules and is left out. ORION is not a submodule: the configure checks out the newest
-          # 2.x release over https (cmake/SemVerDeps.cmake).
+          # lib/FiNeR; radlib (the optional SLW model) has update = none in .gitmodules and is left out. ORION is not a
+          # submodule: the configure checks out the newest 2.x release over https (cmake/SemVerDeps.cmake), and clones
+          # FiNeR's five libraries from their default branches (cmake/FiNeRDependencies.cmake).
           submodules: recursive
 
       - name: Install system dependencies
