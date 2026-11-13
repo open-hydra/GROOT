@@ -51,8 +51,10 @@ jobs:
         with:
           path: site
 
+  # A pull request only builds the site (strict): the rulesets do not let it deploy.
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
