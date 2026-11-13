@@ -8,6 +8,7 @@ change a build.
 
 ### Added
 
+- Add workflow to automayically source contributors list.
 - `install.sh build --update-deps` selects the newest ORION 2.x.
 - [Versioning](docs/development/versioning.md) page.
 - The configure stops when ORION or FiNeR is not the release GROOT is tested with (`GROOT_PIN_CHECK=WARNING` to build it on purpose).
