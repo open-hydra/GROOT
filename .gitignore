@@ -9,3 +9,7 @@ run_test.sh
 # Release of ORION checked out by the configure (cmake/SemVerDeps.cmake), and the one selected
 deps.lock
 lib/ORION
+
+# Documentation site (zensical build) and Zensical's cache
+site
+.cache

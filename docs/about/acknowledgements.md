@@ -22,15 +22,15 @@ ORION provides built-in functions to read files in different formats. GROOT uses
 
 ## Documentation Tools
 
-### MkDocs
+### Zensical
 
 **Static Site Generator**
 
-- **Website:** [mkdocs.org](https://www.mkdocs.org)
-- **License:** BSD-2-Clause
+- **Website:** [zensical.org](https://zensical.org)
+- **License:** MIT
 - **Contribution:** Documentation site generation
 
-MkDocs transforms GROOT's documentation into a beautiful, searchable website.
+Zensical transforms GROOT's documentation into a searchable website.
 
 ### Material for MkDocs
 

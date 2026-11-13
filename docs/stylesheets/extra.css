@@ -1,0 +1,251 @@
+/* Let SVG inherit text color */
+.md-content svg {
+  color: inherit;
+}
+
+/* Recolor ONLY text */
+.md-content svg text {
+  fill: currentColor !important;
+}
+
+/* Recolor ONLY axes spines and ticks */
+.md-content svg .matplotlib-axis path,
+.md-content svg .matplotlib-axis line {
+  stroke: currentColor !important;
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Home page (docs/index.md): plain Markdown with md_in_html blocks, so
+   Zensical and MkDocs build it alike and strict mode checks its links.
+   The hero takes GROOT's amber in both schemes; the rest follows the
+   scheme. The Hydra scheme has its own stylesheet, hydra.css, shared with
+   the home pages of the other codes.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --groot-ink: #1a1500;
+  --groot-deep: #231a02;
+  --groot-amber: #facc15;
+  --groot-cream: #fef08a;
+  --groot-dim: #a8a29e;
+}
+/* In the Hydra scheme (hydra.css) GROOT is the radiation solver: its accent is the radiation colour */
+.hydra { --hydra-accent: var(--hydra-radiation); }
+
+/* The page title is the hero's own <h1>; the headings of the home page are titles, not anchors (the hidden ¶ would
+   wrap the title on a phone and pull the centred ones off centre) */
+.md-content__inner:has(> .groot-hero) > h1:first-child { display: none; }
+.groot-hero__title .headerlink, .groot-heading .headerlink { display: none; }
+/* md_in_html wraps inline content in <p>: the grids below place its links, not the paragraph */
+.groot-tools > p, .groot-links > p { display: contents; }
+.md-typeset a.groot-tool, .md-typeset .groot-links a { text-decoration: none; }
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
+.groot-hero {
+  position: relative;
+  margin: 0 0 1rem;
+  padding: 3.6rem 2.6rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  text-align: center;
+  color: #f5f5f4;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(250, 204, 21, 0.30), transparent 50%),
+    radial-gradient(circle at 8% 110%, rgba(234, 179, 8, 0.18), transparent 42%),
+    linear-gradient(140deg, var(--groot-ink) 0%, var(--groot-deep) 100%);
+}
+/* a structured grid, the mesh GROOT solves on */
+.groot-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(250, 204, 21, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 204, 21, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at 50% 50%, #000 10%, transparent 80%);
+  pointer-events: none;
+}
+.groot-hero > * { position: relative; }
+/* :where() keeps this below the margins of the classes underneath */
+.md-typeset :where(.groot-hero) p { margin: 0; }
+
+.md-typeset .groot-hero__eyebrow {
+  margin-bottom: 0.8rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--groot-amber);
+}
+.md-typeset .groot-hero__title {
+  margin: 0 0 0.9rem;
+  font-size: clamp(3.4rem, 10vw, 6rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #fffbeb 0%, var(--groot-cream) 50%, #fde047 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.md-typeset .groot-hero__lead {
+  max-width: 34rem;
+  margin: 0 auto 1.8rem;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--groot-cream);
+}
+.md-typeset .groot-hero__cmd {
+  display: inline-block;
+  margin-bottom: 1.8rem;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  border-radius: 0.5rem;
+  background: rgba(10, 8, 6, 0.6);
+  font-family: var(--md-code-font-family);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #f5f5f4;
+}
+.groot-hero__cmd span { margin-right: 0.55rem; color: var(--groot-amber); }
+.groot-hero__cmd::after {
+  content: "▍";
+  margin-left: 0.2rem;
+  color: var(--groot-amber);
+  animation: groot-blink 1.1s steps(1) infinite;
+}
+@keyframes groot-blink { 50% { opacity: 0; } }
+
+.md-typeset .groot-hero .md-button {
+  margin: 0 0.3rem 0.6rem;
+  font-size: 0.75rem;
+}
+.md-typeset .groot-hero .md-button--primary {
+  background-color: var(--groot-amber);
+  border-color: var(--groot-amber);
+  color: var(--groot-ink);
+}
+.md-typeset .groot-hero .groot-hero__ghost {
+  border: 0.1rem solid rgba(245, 245, 244, 0.55);
+  background-color: transparent;
+  color: #f5f5f4;
+}
+.md-typeset .groot-hero .md-button:hover,
+.md-typeset .groot-hero .md-button:focus {
+  background-color: #fff;
+  border-color: #fff;
+  color: var(--groot-ink);
+}
+.md-typeset .groot-hero__name {
+  margin-top: 1.4rem;
+  font-size: 0.65rem;
+  color: var(--groot-dim);
+}
+.md-typeset .groot-hero__name strong { color: #f5f5f4; }
+
+/* ── Section titles ─────────────────────────────────────────────────── */
+.md-typeset .groot-kicker {
+  margin: 3.2rem 0 0.2rem;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--md-accent-fg-color);
+}
+.md-typeset h2.groot-heading {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--md-default-fg-color);
+}
+.md-typeset .groot-sub {
+  max-width: 36rem;
+  margin: 0 auto 1.8rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* ── The six capabilities ──────────────────────────────────────────────────── */
+.groot-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.md-typeset a.groot-tool {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-content: center;
+  column-gap: 0.6rem;
+  row-gap: 0.15rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.7rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color--light);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.md-typeset a.groot-tool:hover {
+  transform: translateY(-2px);
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+.md-typeset a.groot-tool .twemoji {
+  grid-row: 1 / 3;
+  grid-column: 1;
+  height: auto;
+  padding: 0.5rem;
+  border-radius: 0.6rem;
+  background: var(--md-accent-fg-color--transparent);
+  color: var(--md-accent-fg-color);
+  font-size: 1.15rem;
+}
+.groot-tool b {
+  grid-column: 2;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-default-fg-color);
+}
+.groot-tool i {
+  grid-column: 2;
+  font-size: 0.66rem;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+/* ── Links ──────────────────────────────────────────────────────────── */
+.groot-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 2.6rem 0 1rem;
+}
+.md-typeset .groot-links a {
+  padding: 0.4rem 0.95rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset .groot-links a:hover { border-color: var(--md-accent-fg-color); color: var(--md-accent-fg-color); }
+
+/* ── Narrower screens ───────────────────────────────────────────────── */
+@media (max-width: 60em) {
+  .groot-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 40em) {
+  .groot-hero { padding: 2.4rem 1.4rem; }
+  .groot-tools { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .groot-hero__cmd::after { animation: none; }
+}
