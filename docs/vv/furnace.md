@@ -61,6 +61,10 @@ python verify.py --plot
   <figcaption>Axisymmetric furnace.  From left: source at r ≈ 25 % R, source at r ≈ 75 % R, lateral wall heat flux.  Dashed: legacy-GROOT reference.</figcaption>
 </figure>
 
+!!! note "A point not counted"
+    The first reference point of the source at $r \approx 25\,\%R$ ($x = 0.124$ m) is plotted but left out of the
+    error: GROOT gives 6 388 W/m³ there against 69 261 W/m³ of the reference. The other 19 points agree within 1 %.
+
 ## Output files
 
 | File | Description |

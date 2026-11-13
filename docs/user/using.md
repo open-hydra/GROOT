@@ -116,12 +116,12 @@ The output format is controlled by `sol-format` in `[GROOT-IO]`.
 |-------|--------|
 | `tecplot ascii` | Tecplot ASCII (`.tec`) — default |
 | `tecplot binary` | Tecplot binary (`.szplt`) — requires TecIO |
-| `vtk ascii` | VTK ASCII (`.vtm`) — experimental, not yet validated |
-| `vtk raw` | VTK binary (`.vtm`) — experimental, not yet validated |
+| `vtk ascii` | VTK XML, ASCII (`.vtm` with its `.vts` block files in `OUTPUT/vtk/`) |
+| `vtk raw` | VTK XML, raw binary (same files) |
 
-!!! warning "VTK I/O limitations"
-    - **Input** (`[MOSE-IO]`): reading the gas-phase field in VTK format is not yet functional. Always use `tecplot ascii` or `tecplot binary` for `[MOSE-IO] sol-format`. The wall file (`OUTPUT/wall.tec`) is always read as Tecplot ASCII regardless of this setting.
-    - **Output** (`[GROOT-IO]`): VTK output for `rad-field` and `rad-wall` is implemented but not validated. Use Tecplot formats for production runs.
+!!! note "Files of the wall"
+    `OUTPUT/wall.tec` (the wall temperatures from MOSE) is always read as Tecplot ASCII, whatever `[MOSE-IO] sol-format`
+    says. The wall file GROOT writes, `rad-wall`, follows `[GROOT-IO] sol-format`.
 
 ### Output Variables
 
