@@ -47,6 +47,8 @@ contains
                   Nz => grid%blk(b)%dim(3))
           select case (f)
             case (1, 2)
+              !! a face is a block with no cells in its normal direction
+              IOwall%block(bb)%Ni = 0;  IOwall%block(bb)%Nj = Ny;  IOwall%block(bb)%Nk = Nz
               allocate(IOwall%block(bb)%mesh(1:3, 0:0,  0:Ny, 0:Nz))
               allocate(IOwall%block(bb)%vars(1:Onwall, 1, 1:Ny, 1:Nz))
               do k = 0, Nz; do j = 0, Ny
@@ -66,6 +68,8 @@ contains
               end if
 
             case (3, 4)
+              !! a face is a block with no cells in its normal direction
+              IOwall%block(bb)%Ni = Nx;  IOwall%block(bb)%Nj = 0;  IOwall%block(bb)%Nk = Nz
               allocate(IOwall%block(bb)%mesh(1:3, 0:Nx, 0:0, 0:Nz))
               allocate(IOwall%block(bb)%vars(1:Onwall, 1:Nx, 1, 1:Nz))
               do k = 0, Nz; do i = 0, Nx
@@ -85,6 +89,8 @@ contains
               end if
 
             case (5, 6)
+              !! a face is a block with no cells in its normal direction
+              IOwall%block(bb)%Ni = Nx;  IOwall%block(bb)%Nj = Ny;  IOwall%block(bb)%Nk = 0
               allocate(IOwall%block(bb)%mesh(1:3, 0:Nx, 0:Ny, 0:0))
               allocate(IOwall%block(bb)%vars(1:Onwall, 1:Nx, 1:Ny, 1))
               do j = 0, Ny; do i = 0, Nx
@@ -112,11 +118,13 @@ contains
   subroutine Write_Wall_Solution(grid, file, fmt)
     use Lib_VTK
     use Lib_Tecplot
+    use GROOT_IO_Solution, only: vtk_varnames
     implicit none
     type(GROOT_domain_type), intent(in)  :: grid
     character(len=*),        intent(in)  :: file
     character(len=*),        intent(in)  :: fmt
     character(llen) :: path, localpath_vtk
+    character(llen) :: vtknames
     integer         :: E_IO
 
     path = 'OUTPUT/'
@@ -128,11 +136,12 @@ contains
         IOwall%vtk%format = 'raw'
       end if
       localpath_vtk = trim(path)//'vtk/'
+      vtknames = vtk_varnames(Owallnames)
       call execute_command_line('mkdir -p '//trim(localpath_vtk))
       E_IO = vtk_write_structured_multiblock(orion=IOwall, &
                vtspath=trim(localpath_vtk)//trim(file), &
                vtmpath=trim(path)//trim(file), &
-               varnames=Owallnames, time=grid%time)
+               varnames=vtknames, time=grid%time)
     else
       if (index(fmt, 'binary') > 0) then
         IOwall%tec%format = 'binary'
@@ -142,7 +151,7 @@ contains
         IOwall%tec%extension = '.tec'
       end if
       E_IO = tec_write_structured_multiblock(orion=IOwall, varnames=Owallnames, &
-               filename=trim(path)//trim(file)//'.tec')
+               filename=trim(path)//trim(file)//trim(IOwall%tec%extension))
     end if
   end subroutine Write_Wall_Solution
 

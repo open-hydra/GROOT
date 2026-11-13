@@ -6,10 +6,11 @@ module GROOT_IO_Solution
   public :: Input_Solution_Setup
   public :: Output_Solution_Setup
   public :: read_wall_tec
+  public :: vtk_varnames
   public :: IOtime
 
   integer          :: io_error
-  real(R8)         :: IOtime
+  real(R8)         :: IOtime = 0.0_R8   !! time of the gas field (the VTK files hold it; Tecplot ones do not)
 
   !! Procedure pointers (concrete target set by Input_Solution_Setup)
   procedure(r_solution_if), pointer, public :: read_bck      => null()
@@ -49,16 +50,13 @@ contains
     character(6)    :: extension
 
     if (index(obj_io%gas_format,'vtk')>0) then
-        extension = '.vtm'
-        read_bck => Read_vtk_tec
-      else
-        if (index(obj_io%gas_format,'ascii')>0) then
-          extension = '.tec'
-        else
-          extension = '.szplt'
-        endif
-        read_bck => Read_vtk_tec
+      extension = '.vtm'
+    else if (index(obj_io%gas_format,'ascii')>0) then
+      extension = '.tec'
+    else
+      extension = '.szplt'
     end if
+    read_bck => read_vtk_tec
 
     obj_io%nameinit = trim('OUTPUT/field')//trim(extension)
     inquire(file=obj_io%nameinit, exist=present)
@@ -106,20 +104,20 @@ contains
         Onvar    = 12
     end select
 
-    IOfield%vtk%format = 'raw'
     IOfield%vtk%node   = .false.
     IOfield%tec%node   = .false.
 
 
+    !! VTK: 'ascii', or 'raw' (appended binary), as the wall file
     if (index(obj_io%sol_format,'ascii')>0) then
-        IOfield%tec%extension = '.tec'
-        IOfield%tec%format = 'ascii'
-        IOfield%vtk%format = 'ascii'
-      else
-        IOfield%tec%extension = '.szplt'
-        IOfield%tec%format = 'binary'
-        IOfield%vtk%format = 'binary'
-      endif
+      IOfield%tec%extension = '.tec'
+      IOfield%tec%format    = 'ascii'
+      IOfield%vtk%format    = 'ascii'
+    else
+      IOfield%tec%extension = '.szplt'
+      IOfield%tec%format    = 'binary'
+      IOfield%vtk%format    = 'raw'
+    endif
 
     IOfield%tec%bc     = .false.
 
@@ -206,6 +204,7 @@ contains
     if (index(obj_io%sol_format,'vtk')>0) then
       localpath_vtk = trim(path)//'vtk/'
       call execute_command_line('mkdir -p '//trim(localpath_vtk))
+      Varnames = vtk_varnames(Varnames)
       E_IO = vtk_write_structured_multiblock(orion=IOfield,vtspath=trim(localpath_vtk)//trim(file), &
                                                             vtmpath=trim(path)//trim(file),varnames=Varnames,time=grid%time)
     else
@@ -217,7 +216,7 @@ contains
   !! ----------------------------------------------------------
   subroutine read_vtk_tec(IOfield_gas)
     use GROOT_Config_Types_m, only: obj_io
-    use GROOT_Parameters_m,   only: clen
+    use GROOT_Parameters_m,   only: clen, hlen
     use Lib_ORION_Data,       only: orion_data
     use Lib_Tecplot
     use Lib_VTK
@@ -225,8 +224,9 @@ contains
     implicit none
     type(orion_data), intent(inout)           :: IOfield_gas
     ! Local
-    integer         :: error
-    character(clen) :: format(2)
+    integer             :: error
+    character(clen)     :: format(2)
+    character(len=hlen) :: vtmpath, vtspath
 
     call parse(obj_io%gas_format,' ', format)
 
@@ -235,14 +235,45 @@ contains
       IOfield_gas%tec%format = trim(format(2))
       error = tec_read_structured_multiblock(orion=IOfield_gas,filename=trim(obj_io%nameinit))
     case('vtk')
-      IOfield_gas%tec%format = trim(format(2))
-      error = vtk_read_structured_multiblock(orion=IOfield_gas,vtmpath=obj_io%nameinit(1:len(trim(obj_io%nameinit))-4),vtspath='INPUT/vtk/field',time=obj_io%IOtime)
+      IOfield_gas%vtk%format = trim(format(2))
+      call resolve_vtk_input_paths(obj_io%nameinit, vtmpath, vtspath)
+      error = vtk_read_structured_multiblock(orion=IOfield_gas, vtmpath=trim(vtmpath), vtspath=trim(vtspath), &
+                                             time=obj_io%IOtime)
+      IOtime = obj_io%IOtime
     end select
 
     if (error/=0) obj_io%error_message = "[ERROR] reading input file "//trim(obj_io%nameinit)
 
   end subroutine read_vtk_tec
 
+
+
+  !! ----------------------------------------------------------
+  !! The names of the variables as the VTK writer takes them: separated by one space, with no quotes. The Tecplot form,
+  !! "Ib" "k(0)","k(1)", would put the quotes inside the name attribute of the file, which is not valid XML.
+  function vtk_varnames(names) result(out)
+    use GROOT_Parameters_m, only: hlen
+    implicit none
+    character(len=*), intent(in) :: names
+    character(len=hlen)          :: out
+    integer :: i, n
+
+    out = ' '
+    n   = 0
+    do i = 1, len_trim(names)
+      select case (names(i:i))
+        case ('"')
+          cycle
+        case (',')
+          n = n + 1
+          out(n:n) = ' '
+        case default
+          n = n + 1
+          out(n:n) = names(i:i)
+      end select
+    end do
+    out = adjustl(out)
+  end function vtk_varnames
 
 
   !! ----------------------------------------------------------
@@ -347,22 +378,22 @@ contains
 
 
   !! ----------------------------------------------------------
-  !! Resolve the pair (vtmpath, vtspath) from a .vtm MOSE/GROOT file.
+  !! The two paths of the VTK reader from the name of the .vtm file (OUTPUT/field.vtm): vtmpath is the file without its
+  !! extension, vtspath the directory of the file (with its slash): the .vtm lists its block files, OUTPUT/vtk/fieldBlock1.vts,
+  !! relative to its own directory
   subroutine resolve_vtk_input_paths(nameinit, vtmpath, vtspath)
     use GROOT_Parameters_m, only: hlen
     implicit none
     character(len=*),    intent(in)  :: nameinit
     character(len=hlen), intent(out) :: vtmpath, vtspath
-    integer :: last_sep, stem_len
+    integer :: last_sep
 
-    stem_len = len_trim(nameinit) - 4
-    vtmpath  = nameinit(1:stem_len)
-
+    vtmpath  = nameinit(1:len_trim(nameinit)-4)
     last_sep = scan(trim(vtmpath), '/\', back=.true.)
     if (last_sep > 0) then
-      vtspath = trim(vtmpath(1:last_sep))//'vtk/'//trim(vtmpath(last_sep+1:))
+      vtspath = vtmpath(1:last_sep)
     else
-      vtspath = 'vtk/'//trim(vtmpath)
+      vtspath = ''
     end if
   end subroutine resolve_vtk_input_paths
 
