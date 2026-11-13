@@ -38,10 +38,7 @@ cd GROOT
 # 2. Build in debug mode
 ./install.sh build --compilers=gnu
 
-# 3. (Optional) Update submodules to latest
-./install.sh update --remote
-
-# 4. Iterative recompilation
+# 3. Iterative recompilation
 ./install.sh compile
 ```
 

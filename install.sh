@@ -23,18 +23,15 @@ Global Options:
 
 Commands:
   build                     Perform a full build
-    --include-orion=<path>  Build a local ORION checkout instead of a release
-    --include-finer=<path>  Set external FiNeR path
+    --include-orion=<path>  Build an external ORION clone instead of the release GROOT selects
+    --include-finer=<path>  Build an external FiNeR clone instead of the submodule lib/FiNeR
     --update-deps           Select again the newest release of ORION (deps.lock)
     --compilers=<name>      Set compilers (intel, gnu)
     --use-openmp            Use OpenMP
-    --use-radlib            Enable the SLW model via radlib (lib/third_party/radlib-master)
+    --use-radlib            Enable the SLW model via radlib (submodule lib/third_party/radlib)
     --debug                 Build in Debug mode (default: Release)
 
   compile                   Compile the program using the CMakePresets file
-
-  update                    Download git submodules
-    --remote                Use the latest remote commit
 
 EOF
     exit 1
@@ -60,10 +57,13 @@ function write_presets() {
   FC=$(grep  '^CMAKE_Fortran_COMPILER:FILEPATH=' "$BUILD_DIR/CMakeCache.txt" | cut -d= -f2-)
   CC=$(grep  '^CMAKE_C_COMPILER:FILEPATH='       "$BUILD_DIR/CMakeCache.txt" | cut -d= -f2-)
   CXX=$(grep '^CMAKE_CXX_COMPILER:FILEPATH='     "$BUILD_DIR/CMakeCache.txt" | cut -d= -f2-)
-  # the local ORION checkout, when given
+  # the external clones, when given
   local sources=""
   if [[ -n $ORION_PATH ]]; then
-    sources+="        \"ORION_PATH\":              \"${ORION_PATH}\","$'\n'
+    sources+="        \"FETCHCONTENT_SOURCE_DIR_ORION\": \"${ORION_PATH}\","$'\n'
+  fi
+  if [[ -n $FINER_PATH ]]; then
+    sources+="        \"FETCHCONTENT_SOURCE_DIR_FINER\": \"${FINER_PATH}\","$'\n'
   fi
 
   cat <<EOF > CMakePresets.json
@@ -79,8 +79,7 @@ function write_presets() {
       "description": "Default preset",
       "binaryDir": "\${sourceDir}/build",
       "cacheVariables": {
-${sources}        "FINER_PATH":              "${FINER_PATH}",
-        "CMAKE_BUILD_TYPE":        "${BUILD_TYPE}",
+${sources}        "CMAKE_BUILD_TYPE":        "${BUILD_TYPE}",
         "CMAKE_Fortran_COMPILER":  "${FC}",
         "CMAKE_C_COMPILER":        "${CC}",
         "CMAKE_CXX_COMPILER":      "${CXX}",
@@ -99,19 +98,17 @@ EOF
 # Defaults
 COMMAND=""
 COMPILERS=""
-# ORION: the release of deps.lock, or the newest one that GROOT accepts (see CMakeLists.txt)
+# ORION and FiNeR: the release GROOT selects and the submodule (see CMakeLists.txt), or external clones
 ORION_PATH=""
+FINER_PATH=""
 UPDATE_DEPS="false"
-FINER_PATH=$(pwd)'/lib/third_party/FiNeR/'
 USE_OPENMP="false"
 USE_MPI="false"
 USE_RADLIB="false"
-REMOTE="false"
 BUILD_TYPE="RELEASE"
 
-CMD=("build" "compile" "update")
+CMD=("build" "compile")
 CMD_OPTIONS_build=("--compilers --include-orion --include-finer --update-deps --use-openmp --use-radlib --debug")
-CMD_OPTIONS_update=("--remote")
 
 # Parse global options
 while getopts "hv-:" opt; do
@@ -153,7 +150,8 @@ while [[ $# -gt 0 ]]; do
             ;;
         --include-finer=*)
             [[ "$COMMAND" == "build" ]] || { error "--include-finer is only valid for 'build'"; exit 1; }
-            FINER_PATH="${1#*=}"
+            # absolute: CMake takes the folder from the build directory
+            FINER_PATH=$(cd "${1#*=}" && pwd) || { error "No folder ${1#*=}"; exit 1; }
             ;;
         --update-deps)
             [[ "$COMMAND" == "build" ]] || { error "--update-deps is only valid for 'build'"; exit 1; }
@@ -179,10 +177,6 @@ while [[ $# -gt 0 ]]; do
             [[ "$COMMAND" == "build" ]] || { error "--debug is only valid for 'build'"; exit 1; }
             BUILD_TYPE="DEBUG"
             ;;
-        --remote)
-            [[ "$COMMAND" == "update" ]] || { error "--remote is only valid for 'update'"; exit 1; }
-            REMOTE="true"
-            ;;
         *)
             eval "opts=(\"\${CMD_OPTIONS_${COMMAND}[@]}\")"
             error "Unknown option '$1' for command '$COMMAND'. Valid options: ${opts[@]}"
@@ -200,11 +194,10 @@ case "$COMMAND" in
         task "Building $project"
 
         task "Cloning submodules"
-        if [[ $FINER_PATH == $(pwd)'/lib/third_party/FiNeR/' ]]; then
-          # FiNeR and its five libraries (PENF, FACE, FLAP, BeFoR64, StringiFor): CMake adds the libraries before FiNeR
-          git submodule update --init lib/third_party/FiNeR lib/third_party/PENF lib/third_party/FACE \
-                                      lib/third_party/FLAP lib/third_party/BeFoR64 lib/third_party/StringiFor
-        fi
+        # sync first: a clone made before FiNeR moved (lib/third_party/FiNeR to lib/FiNeR) lacks its new entry
+        git submodule sync --quiet
+        [[ -z $FINER_PATH ]] && git submodule update --init lib/FiNeR
+        # ORION (a release, in lib/ORION) and FiNeR's own dependencies are cloned by CMake at configure time.
         # radlib is optional (update=none in .gitmodules): only pulled on demand.
         # --checkout is required to override update=none for this explicit fetch.
         [[ "$USE_RADLIB" == "true" ]]                         && git submodule update --init --checkout lib/third_party/radlib
@@ -223,8 +216,8 @@ case "$COMMAND" in
         log "Build dir:   $BUILD_DIR"
         log "Build type:  $BUILD_TYPE"
         log "ORION:       ${ORION_PATH:-release}"
+        log "FiNeR:       ${FINER_PATH:-lib/FiNeR}"
         log "Update ORION: $UPDATE_DEPS"
-        log "FINER path:  $FINER_PATH"
         log "Use OpenMP:  $USE_OPENMP"
         if [[ -z "${FC+x}" || -z "${CXX+x}" || -z "${CC+x}" ]]; then
           log "Compilers not set — CMake will decide."
@@ -232,16 +225,19 @@ case "$COMMAND" in
           log "Compilers: FC=$FC, CXX=$CXX, CC=$CC"
         fi
 
-        CMAKE_ARGS=(-DFINER_PATH="$FINER_PATH")
+        CMAKE_ARGS=(-B "$BUILD_DIR")
         if [[ -n $ORION_PATH ]]; then
-          CMAKE_ARGS+=(-DORION_PATH="$ORION_PATH")
+          CMAKE_ARGS+=(-DFETCHCONTENT_SOURCE_DIR_ORION="$ORION_PATH")
+        fi
+        if [[ -n $FINER_PATH ]]; then
+          CMAKE_ARGS+=(-DFETCHCONTENT_SOURCE_DIR_FINER="$FINER_PATH")
         fi
         if [[ $UPDATE_DEPS == "true" ]]; then
           CMAKE_ARGS+=(-DSEMVER_UPDATE=ALL)
         fi
 
         rm -rf "$BUILD_DIR"
-        cmake -B "$BUILD_DIR" "${CMAKE_ARGS[@]}" \
+        cmake "${CMAKE_ARGS[@]}" \
               -DUSE_OPENMP="$USE_OPENMP" \
               -DUSE_MPI="$USE_MPI"       \
               -DUSE_RADLIB="$USE_RADLIB" \
@@ -260,18 +256,6 @@ case "$COMMAND" in
         cmake --preset default    || exit 1
         cmake --build "$BUILD_DIR" || exit 1
         log "[OK] Compilation successful"
-        ;;
-
-    update)
-        task "Updating git submodules"
-        if [[ "$REMOTE" == "true" ]]; then
-          log "Updating submodules to latest remote commit"
-          git submodule update --init --remote
-        else
-          log "Updating submodules to pinned commit"
-          git submodule update --init
-        fi
-        log "[OK] Submodules updated"
         ;;
 
     *)
