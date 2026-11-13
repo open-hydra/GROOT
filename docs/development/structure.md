@@ -31,11 +31,11 @@ GROOT/
 │           ├── lib_raytracing.f90     #   DTM ray tracing
 │           └── lib_rte.f90            #   RTE solve loop
 │
-├── lib/                     # External dependencies (git submodules)
+├── lib/                     # External dependencies
 │   ├── ORION/               # Structured-grid I/O library (a release, checked out by the configure)
+│   ├── FiNeR/               # INI file parser (git submodule); its libraries are cloned by the configure
 │   └── third_party/
-│       ├── FiNeR/           # INI file parser
-│       └── PENF/ FACE/ FLAP/ BeFoR64/ StringiFor/  # Libraries of FiNeR
+│       └── radlib/          # SLW spectral model (optional git submodule)
 │
 ├── test/                    # Validation test suite
 │   ├── homcube/             #   Homogeneous cube (3-D)
@@ -338,9 +338,12 @@ Key CMake options:
 
 | Variable | Default | Library |
 |----------|---------|---------|
-| `ORION_PATH` | none: the release of `deps.lock`, or the newest 2.x from 2.1.0 on, in `lib/ORION/` | ORION I/O (a local checkout) |
-| `FINER_PATH` | `lib/third_party/FiNeR/` | FiNeR INI parser |
-| `FINER_DEPS_PATH` | `lib/third_party/` | The five libraries of FiNeR (PENF, FACE, FLAP, BeFoR64, StringiFor) |
+| `FETCHCONTENT_SOURCE_DIR_ORION` | none: the release of `deps.lock`, or the newest 2.x from 2.1.0 on, in `lib/ORION/` | ORION I/O (an external clone) |
+| `FETCHCONTENT_SOURCE_DIR_FINER` | none: the submodule `lib/FiNeR/` | FiNeR INI parser (an external clone) |
+| `GROOT_FINER_DEPS` | `FREE` | FiNeR's five libraries: default branches (`FREE`) or tested releases (`BACKUP`) |
+| `GROOT_PIN_CHECK` | `FATAL_ERROR` | `WARNING` builds a library that is not the required release |
+
+See [Versioning](versioning.md).
 
 ---
 

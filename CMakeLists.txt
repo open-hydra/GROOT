@@ -7,6 +7,29 @@ set(solver GROOT)
 
 project(${solver} LANGUAGES Fortran CXX C)
 
+# Libraries requirements
+# - ORION.
+# Required by a range of releases with semver_dependency of cmake/SemVerDeps.cmake.
+# Standalone, the release is checked out in lib/ORION, out of the build folder, and kept in deps.lock (both git ignored); -DSEMVER_UPDATE=ALL selects the newest one again.
+set(GROOT_ORION_VERSION 2.1)
+set(GROOT_ORION_URL https://github.com/MarcoGrossi92/ORION.git)
+# - FiNeR.
+# Directly pinned at one release (bump the gitlink and the tag together).
+set(GROOT_FINER_TAG v2.3.0)
+# FiNeR's own dependencies (cmake/FiNeRDependencies.cmake).
+# FREE fetches them as FiNeR's author does (`fobis fetch`)
+# BACKUP checks out the releases below, which GROOT builds and passes its tests with.
+# When an upstream change breaks GROOT, set BACKUP here, or configure one build with -DGROOT_FINER_DEPS=BACKUP (kept in its cache until -UGROOT_FINER_DEPS).
+if (NOT DEFINED GROOT_FINER_DEPS)
+  set(GROOT_FINER_DEPS "FREE")
+endif()
+set(GROOT_FINER_BACKUP_PINS
+  "PENF=v2.0.1"
+  "StringiFor=v1.8.0"
+  "FACE=v1.1.17"
+  "FLAP=v2.5.3"
+  "BeFoR64=v1.2.4")
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(CMAKE_VERBOSE_MAKEFILE FALSE)
@@ -24,71 +47,18 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(GNUInstallDirs)
   set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules")
 
-  # Helper: initialize a git submodule from the correct git root
-  macro(ensure_submodule_initialized SUBMOD_PATH)
-    if (NOT EXISTS "${SUBMOD_PATH}/CMakeLists.txt")
-      message(STATUS "Submodule at ${SUBMOD_PATH} not initialized. Attempting git submodule update --init...")
-      get_filename_component(_sm_parent "${SUBMOD_PATH}" DIRECTORY)
-      execute_process(
-        COMMAND git rev-parse --show-toplevel
-        WORKING_DIRECTORY "${_sm_parent}"
-        OUTPUT_VARIABLE _sm_git_root
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE _sm_git_result)
-      if(_sm_git_result EQUAL 0)
-        file(RELATIVE_PATH _sm_rel "${_sm_git_root}" "${SUBMOD_PATH}")
-        execute_process(
-          COMMAND git submodule update --init "${_sm_rel}"
-          WORKING_DIRECTORY "${_sm_git_root}"
-          RESULT_VARIABLE _sm_init_result)
-        if(NOT _sm_init_result EQUAL 0)
-          message(FATAL_ERROR "Failed to initialize submodule: ${SUBMOD_PATH}")
-        endif()
-      else()
-        message(FATAL_ERROR "Could not find git root for submodule: ${SUBMOD_PATH}")
-      endif()
-    endif()
-  endmacro()
-
-  # Path fallbacks (standalone builds)
-  if (NOT DEFINED FINER_PATH)
-    set(FINER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/third_party/FiNeR/")
-  endif()
-  if (NOT DEFINED FINER_DEPS_PATH)
-    set(FINER_DEPS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/third_party/")
-  endif()
-
-  # ORION: the newest release that satisfies the requirement below, checked out in lib/ORION (cmake/SemVerDeps.cmake). The
-  # release stays that of the lock file deps.lock (not tracked), -DSEMVER_UPDATE=ALL selects the newest one again.
-  # -DORION_PATH=<path> (or -DFETCHCONTENT_SOURCE_DIR_ORION=<path>) builds a local checkout instead; lib/ORION itself,
-  # which the presets of the former submodule name, is not one. A project that adds GROOT chooses the release of its build
-  # tree
-  if (ORION_PATH AND NOT FETCHCONTENT_SOURCE_DIR_ORION)
-    get_filename_component(_orion_path "${ORION_PATH}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-    if (NOT _orion_path STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/lib/ORION")
-      set(FETCHCONTENT_SOURCE_DIR_ORION "${_orion_path}")
-    endif()
-  endif()
-  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/SemVerDeps.cmake)
-  semver_dependency(ORION GIT_REPOSITORY https://github.com/MarcoGrossi92/ORION.git VERSION 2.1 SOURCE_DIR lib/ORION)
-  FetchContent_MakeAvailable(ORION)
-
-  # Libraries of FiNeR: FiNeR 2.0.7 and later do not carry them as submodules (its CMake build expects them in its
-  # src/third_party/, fetched with FoBiS) and add each one only when the target is not defined yet: GROOT provides
-  # them, in the order of their dependencies (FLAP needs PENF and FACE, StringiFor needs PENF and BeFoR64)
-  foreach (finer_dep PENF FACE FLAP BeFoR64 StringiFor)
-    if (NOT TARGET ${finer_dep})
-      ensure_submodule_initialized("${FINER_DEPS_PATH}/${finer_dep}")
-      add_subdirectory("${FINER_DEPS_PATH}/${finer_dep}" "${CMAKE_BINARY_DIR}/lib/third_party/${finer_dep}")
+  # Libraries building
+  # An external clone given by a relative path is taken from the source folder
+  foreach(_name ORION FINER)
+    if (FETCHCONTENT_SOURCE_DIR_${_name})
+      get_filename_component(FETCHCONTENT_SOURCE_DIR_${_name} "${FETCHCONTENT_SOURCE_DIR_${_name}}" ABSOLUTE
+                             BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     endif()
   endforeach()
-
-  # FiNeR  (ini-file reader)
-  if(NOT TARGET FiNeR)
-    ensure_submodule_initialized("${FINER_PATH}")
-    set(finerD "${FINER_PATH}" "${CMAKE_BINARY_DIR}/lib/third_party/FiNeR")
-    add_subdirectory(${finerD})
-  endif()
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/SemVerDeps.cmake)
+  semver_dependency(ORION GIT_REPOSITORY ${GROOT_ORION_URL} VERSION ${GROOT_ORION_VERSION} SOURCE_DIR lib/ORION)
+  # FiNeR and its dependencies, the checks of both libraries, and FetchContent_MakeAvailable
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddLibraries.cmake)
 
   # radlib (optional) — enables the RC-SLW model (model = slw)
   # Not wired through ensure_submodule_initialized (that calls git): radlib may be a
@@ -146,6 +116,16 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
       add_custom_target(rcslw_bin DEPENDS "${_rcslw_bin_stamp}")
       add_dependencies(radlib rcslw_bin)
     endif()
+  endif()
+
+else()
+
+  # Part of a larger project, which gives GROOT its ORION and FiNeR.
+  # When that project selected ORION with SemVerDeps, its release is checked against GROOT's requirement; nothing is added here.
+  get_property(_groot_orion_selected GLOBAL PROPERTY SEMVER_ORION_SOURCE SET)
+  if (_groot_orion_selected)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/SemVerDeps.cmake)
+    semver_dependency(ORION GIT_REPOSITORY ${GROOT_ORION_URL} VERSION ${GROOT_ORION_VERSION})
   endif()
 
 endif()

@@ -1,6 +1,6 @@
 # Installation
 
-This document describes how to obtain and build **GROOT**. The instructions describe the current `install.sh` script, CMake configuration and Git submodule layout.
+This document describes how to obtain and build **GROOT**. The instructions describe the current `install.sh` script, CMake configuration and library layout.
 
 !!! note
     GROOT has a dual nature: it is both a library and an executable. The installation process described here produces both the static library `libGROOT.a` and the main executable `bin/GROOT`. If you are only interested in using GROOT as a library, you can link against `libGROOT.a` without caring about the executable.
@@ -13,49 +13,46 @@ Before attempting to build GROOT make sure your system provides the following ex
 - **Fortran compiler** – either the GNU toolchain (`gfortran`) or Intel/oneAPI (`ifort`/`ifx`) are supported..
 - **OpenMP** – needed for optional parallelization support.
 
-### ORION, by release
+### Libraries
 
-GROOT requires [ORION](https://github.com/MarcoGrossi92/ORION) by release: any 2.x from 2.1.0 on (`VERSION 2.1` in
-`CMakeLists.txt`, through `cmake/SemVerDeps.cmake`). The first configuration selects the newest such release on GitHub
-and checks it out in `lib/ORION` (git-ignored); the file `deps.lock` (git-ignored) keeps it, so that the next
+GROOT builds against two libraries. The releases it is tested with are in
+[Versioning](../development/versioning.md).
+
+**ORION**, by release. [ORION](https://github.com/MarcoGrossi92/ORION) 2.1.0 or a later 2.x
+(`GROOT_ORION_VERSION` in `CMakeLists.txt`). The first configuration selects the newest such release on GitHub and
+checks it out in `lib/ORION` (git-ignored); the file `deps.lock` (git-ignored) keeps it, so that the next
 configurations use it without the network. `-DSEMVER_UPDATE=ALL` (`./install.sh build --update-deps`) selects the
-newest release again; `-DORION_PATH=<path>` (`--include-orion=<path>`) builds a local ORION checkout instead.
+newest release again. `-DFETCHCONTENT_SOURCE_DIR_ORION=<path>` (`--include-orion=<path>`) builds an external clone
+instead, which must be a release GROOT accepts.
 
-### Git submodules
+**FiNeR**, the INI file parser, as the Git submodule `lib/FiNeR` (v2.3.0).
+`-DFETCHCONTENT_SOURCE_DIR_FINER=<path>` (`--include-finer=<path>`) builds an external clone of that release instead.
+FiNeR's own libraries (PENF, FACE, FLAP, BeFoR64, StringiFor) are cloned by the configure, in `lib/FiNeR/src/third_party`,
+from their default branches. If an upstream change breaks the build, configure with `-DGROOT_FINER_DEPS=BACKUP` to use
+the releases GROOT is tested with.
 
-GROOT depends on several repositories that are included as Git submodules.
+If the configure stops because `lib/FiNeR` is at another commit (after a `git checkout` of another branch), run
+`git submodule update --init` and configure again.
 
-| Path                               | Repository URL                                        | Purpose                                  |
-|------------------------------------|-------------------------------------------------------|------------------------------------------|
-| `lib/third_party/FiNeR`            | `https://github.com/szaghi/FiNeR.git`                | INI file parser (v2.3.0)             |
-| `lib/third_party/PENF`             | `https://github.com/szaghi/PENF.git`                 | library of FiNeR (v2.0.1)            |
-| `lib/third_party/FACE`             | `https://github.com/szaghi/FACE.git`                 | library of FiNeR (v1.1.17)           |
-| `lib/third_party/FLAP`             | `https://github.com/szaghi/FLAP.git`                 | library of FiNeR (v2.5.3)            |
-| `lib/third_party/BeFoR64`          | `https://github.com/szaghi/BeFoR64.git`              | library of FiNeR (v1.2.4)            |
-| `lib/third_party/StringiFor`       | `https://github.com/szaghi/StringiFor.git`           | library of FiNeR (v1.8.0)            |
-| `lib/third_party/radlib` *(optional)* | `https://github.com/BYUignite/radlib`             | SLW spectral model (RC-SLW) — only when `--use-radlib` |
-
-The `radlib` submodule is **optional** and is *not* pulled by the default
-`git submodule update --init --recursive`. It is fetched on demand only when
-you build with `--use-radlib` (see below).
+**radlib** *(optional)*, `lib/third_party/radlib` (`https://github.com/BYUignite/radlib`): the SLW spectral model
+(RC-SLW). It is a Git submodule marked `update = none`, so it is **not** pulled by `git submodule update`: it is fetched
+on demand only when you build with `--use-radlib` (see below).
 
 
 ## Build methods
 
-First clone the repository with submodules:
+First clone the repository with its submodules:
 
 ```bash
-git clone https://github.com/openhydra/GROOT.git
+git clone --recurse-submodules https://github.com/open-hydra/GROOT.git
 cd GROOT
-# initialise submodules
-git submodule update --init --recursive
 ```
 
 To fully install GROOT, you may either use the bundled install script or invoke CMake manually. The script is convenient and is the preferred route for most users.
 
 ### Build with `install.sh` (recommended)
 
-The script exposes three commands: `build`, `compile`, and `update`.  It also maintains a `CMakePresets.json` file that records the configuration used for
+The script exposes two commands: `build` and `compile`.  It also maintains a `CMakePresets.json` file that records the configuration used for
 the most recent `build` invocation.
 
 ```bash
@@ -85,9 +82,9 @@ Options accepted by `build`
 * `--use-openmp` – enable OpenMP parallelization.
 * `--use-radlib` – enable the optional **SLW** spectral model via radlib. Fetches
   the `lib/third_party/radlib` submodule and configures with `-DUSE_RADLIB=ON`.
-* `--include-orion=PATH` – build a local ORION checkout instead of the release.
+* `--include-orion=PATH` – build an external ORION clone instead of the release GROOT selects.
 * `--update-deps` – select again the newest ORION release that GROOT accepts (it replaces the one of `deps.lock`).
-* `--include-finer=PATH` – use an external FiNeR tree instead of the submodule.
+* `--include-finer=PATH` – build an external FiNeR clone instead of the submodule `lib/FiNeR`.
 
 The script sets up environment variables for the chosen compilers and then invokes CMake. After a successful build, a `CMakePresets.json` file is written in the source root so that subsequent compilations can reuse the configuration.
 
@@ -101,15 +98,6 @@ Re‑runs CMake using the previously generated preset and rebuilds the project w
 ./install.sh compile
 ```
 
-**`update` command**
-
-Synchronises the Git submodules. By default it checks out the commit recorded in `.gitmodules`; passing `--remote` will fetch the latest commit from each remote branch.
-
-```bash
-./install.sh update            # sync to recorded commit
-./install.sh update --remote   # update to newest remote commit
-```
-
 ### Build with CMake
 
 If you prefer fine‑grained control, perform the configuration yourself. This is essentially what `install.sh` does under the hood.
@@ -120,8 +108,8 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_Fortran_COMPILER=gfortran \  # or ifx
     -DUSE_OPENMP=ON \                    # or OFF
-    -DORION_PATH=/path/to/ORION \        # optional: a local checkout instead of the release
-    -DFINER_PATH=/path/to/FiNeR          # optional
+    -DFETCHCONTENT_SOURCE_DIR_ORION=/path/to/ORION \   # optional: an external clone instead of the release
+    -DFETCHCONTENT_SOURCE_DIR_FINER=/path/to/FiNeR     # optional
 cmake --build . --parallel
 ```
 
