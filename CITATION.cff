@@ -1,9 +1,20 @@
 cff-version: 1.2.0
-title: "GROOT"
+title: "GROOT: Grid based RadiatiOn fOrtran Toolbox"
+version: 1.0.0
+date-released: 2026-11-14
 authors:
   - family-names: "Fabiani"
     given-names: "Marco"
+    affiliation: "Sapienza University of Rome"
+  - family-names: "Passarani"
+    given-names: "Giacomo"
+    affiliation: "Sapienza University of Rome"
+  - family-names: "Grossi"
+    given-names: "Marco"
+    affiliation: "Sapienza University of Rome"
+    orcid: "https://orcid.org/0000-0002-8487-1932"
 license: GPL-3.0
-url: "https://github.com/open-hydra/GROOT"
+repository-code: "https://github.com/open-hydra/GROOT"
+url: "https://open-hydra.github.io/GROOT/"
 doi: "10.5281/zenodo.20326894"
 type: software
