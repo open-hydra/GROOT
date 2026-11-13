@@ -1,0 +1,225 @@
+
+#!/usr/bin/env bash
+# Git pre-push hook — runs the GROOT test suite before allowing a push.
+# Activate with: git config core.hooksPath .githooks
+
+set -Eeuo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+BUILD_DIR="${GROOT_BUILD_DIR:-${REPO_ROOT}/build}"
+PYTHON="${PYTHON:-python3}"
+JOBS="${GROOT_JOBS:-$(nproc 2>/dev/null || echo 4)}"
+
+export MPLBACKEND=Agg
+export PYTHON
+
+cd "${REPO_ROOT}"
+
+die() {
+    echo "[pre-push] ERROR: $*" >&2
+    exit 1
+}
+
+# ----------------------------------------------------------------------
+# Prerequisites
+# ----------------------------------------------------------------------
+
+for cmd in cmake gfortran gcc g++; do
+    command -v "${cmd}" >/dev/null 2>&1 ||
+        die "Required command not found: ${cmd}"
+done
+
+command -v "${PYTHON}" >/dev/null 2>&1 ||
+    die "Python not found: ${PYTHON}"
+
+"${PYTHON}" -c 'import numpy, matplotlib' ||
+    die "Install Python dependencies: ${PYTHON} -m pip install numpy matplotlib"
+
+echo "[pre-push] Initialising submodules..."
+git submodule update --init --recursive
+
+# ----------------------------------------------------------------------
+# Configure and build — same configuration as CI
+# ----------------------------------------------------------------------
+
+echo
+echo "[pre-push] Configuring GROOT..."
+
+cmake -S "${REPO_ROOT}" -B "${BUILD_DIR}" \
+    -DCMAKE_BUILD_TYPE=TESTING \
+    -DCMAKE_Fortran_COMPILER=gfortran \
+    -DCMAKE_C_COMPILER=gcc \
+    -DCMAKE_CXX_COMPILER=g++ \
+    -DUSE_OPENMP=OFF \
+    -DUSE_MPI=OFF \
+    -DUSE_RADLIB=OFF \
+    -DUSE_TECIO=OFF
+
+echo
+echo "[pre-push] Building GROOT..."
+
+cmake --build "${BUILD_DIR}" --parallel "${JOBS}"
+
+# ----------------------------------------------------------------------
+# Test runner
+#
+# Blocking failures are recorded, but do not prevent subsequent tests.
+# A warning failure does not block the push.
+# ----------------------------------------------------------------------
+
+FAILURES=()
+
+run_test() {
+    local name="$1"
+    local minutes="$2"
+    local directory="$3"
+    local mode="$4"
+    shift 4
+
+    local status=0
+
+    echo
+    echo "------------------------------------------------------------"
+    echo "[pre-push] ${name}"
+    echo "------------------------------------------------------------"
+
+    (
+        cd "${REPO_ROOT}/${directory}"
+        ulimit -s unlimited
+
+        if [[ "${minutes}" -gt 0 ]] && command -v timeout >/dev/null 2>&1; then
+            timeout "${minutes}m" "$@"
+        else
+            "$@"
+        fi
+    ) || status=$?
+
+    if [[ "${status}" -eq 0 ]]; then
+        echo "[pre-push] PASS: ${name}"
+        return 0
+    fi
+
+    if [[ "${mode}" == "warning" ]]; then
+        echo "[pre-push] WARNING: ${name} failed (non-blocking)."
+        return 0
+    fi
+
+    echo "[pre-push] FAIL: ${name} (exit ${status})"
+    FAILURES+=("${name}")
+    return 1
+}
+
+# ----------------------------------------------------------------------
+# homcube
+# ----------------------------------------------------------------------
+
+run_test "homcube" 20 test/homcube blocking \
+    bash -c './bin/homcube && "$PYTHON" verify.py' || true
+
+# ----------------------------------------------------------------------
+# cube_periodic
+# ----------------------------------------------------------------------
+
+run_test "cube_periodic" 20 test/cube_periodic blocking \
+    bash -c './bin/cube_periodic && "$PYTHON" verify.py' || true
+
+# ----------------------------------------------------------------------
+# finite_cylinder
+# ----------------------------------------------------------------------
+
+run_test "finite_cylinder" 20 test/finite_cylinder blocking \
+    bash -c './bin/cylinder && "$PYTHON" verify.py' || true
+
+# ----------------------------------------------------------------------
+# quadrilateral
+# ----------------------------------------------------------------------
+
+run_test "quadrilateral" 20 test/quadrilateral blocking \
+    bash -c './bin/quadrilateral && "$PYTHON" verify.py' || true
+
+# ----------------------------------------------------------------------
+# furnace_source
+# ----------------------------------------------------------------------
+
+furnace_ok=0
+
+if run_test "furnace_source: run" 90 test/furnace_source blocking \
+    ./bin/furnace; then
+    furnace_ok=1
+fi
+
+# Currently has a known reference-data failure, as documented in CI.
+# Keep this non-blocking until the reference/threshold is resolved.
+if [[ "${furnace_ok}" -eq 1 ]]; then
+    run_test "furnace_source: verify" 0 test/furnace_source warning \
+        "${PYTHON}" verify.py
+fi
+
+# ----------------------------------------------------------------------
+# emissivity
+# ----------------------------------------------------------------------
+
+EMISSIVITY_CHECK=$(cat <<'PY'
+import numpy as np
+
+a = np.loadtxt("OUTPUT/emissivity.dat", comments="#", ndmin=2)
+
+assert a.shape == (30, 6), (
+    f"emissivity.dat: {a.shape} values, 30 rows of 6 expected"
+)
+assert np.isfinite(a).all(), "emissivity.dat: a value that is not finite"
+
+print("emissivity.dat: 30 rows of 6, all finite")
+PY
+)
+
+run_test "emissivity" 10 test/emissivity blocking \
+    bash -c './bin/emissivity && "$PYTHON" -c "$1"' \
+    _ "${EMISSIVITY_CHECK}" || true
+
+# ----------------------------------------------------------------------
+# nozzle
+# ----------------------------------------------------------------------
+
+NOZZLE_CHECK=$(cat <<'PY'
+import numpy as np
+
+for model in ("gray", "snb", "snbw", "wsgg-H2OCO2"):
+    filename = f"OUTPUT/heatflux_nozzle_{model}.dat"
+    a = np.loadtxt(filename, comments="#", ndmin=2)
+
+    assert a.shape == (100, 2), (
+        f"{filename}: {a.shape} values, 100 rows of 2 expected"
+    )
+    assert np.isfinite(a).all(), (
+        f"{filename}: a value that is not finite"
+    )
+
+print("heatflux_nozzle_*.dat: 4 files of 100 rows, finite")
+PY
+)
+
+run_test "nozzle" 40 test/nozzle blocking \
+    bash -c './bin/nozzle && "$PYTHON" -c "$1"' \
+    _ "${NOZZLE_CHECK}" || true
+
+# ----------------------------------------------------------------------
+# Summary
+# ----------------------------------------------------------------------
+
+echo
+echo "============================================================"
+echo "[pre-push] GROOT test summary"
+echo "============================================================"
+
+if [[ "${#FAILURES[@]}" -gt 0 ]]; then
+    echo "[pre-push] The following tests failed:"
+    printf '  - %s\n' "${FAILURES[@]}"
+    echo
+    echo "[pre-push] Push aborted."
+    exit 1
+fi
+
+echo "[pre-push] All blocking tests passed."
+echo "[pre-push] Push allowed."
+exit 0
